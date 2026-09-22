@@ -135,7 +135,7 @@
   .btn:disabled{ opacity:0.4; cursor:not-allowed; }
 
   /* ---------- Stats strip ---------- */
-  .stats{ grid-area:stats; display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+  .stats{ grid-area:stats; display:grid; grid-template-columns:repeat(5,1fr); gap:1px; background:var(--border); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
   .stat-card{
     background:var(--panel); padding:8px 6px; display:flex; flex-direction:column; gap:1px;
     transform:translateZ(0); -webkit-transform:translateZ(0);
@@ -566,6 +566,9 @@
       max-height:none; overflow-y:visible;
       font-size:12px; font-weight:600; gap:9px; padding:8px 12px;
     }
+    /* 모바일에서 통계 카드가 5개로 늘어나 한 줄(5열)엔 너무 빽빽해지므로
+       3열 x 2행으로 바꿔 글자가 안 눌리게 한다. */
+    .stats{ grid-template-columns:repeat(3,1fr); }
     .legend .dot{ width:9px; height:9px; }
     .sidebar{ max-width:none; min-height:0; border-left:none; border-right:none; border-top:1px solid var(--border); }
     .sidebar-list{ max-height:60vh; }
@@ -645,8 +648,9 @@
     <div class="legend" id="legend" style="display:none;"></div>
 
     <div class="stats">
-      <div class="stat-card high"><div class="num" id="stat-high-people">0</div><div class="label" data-i18n="stat_high_people">고위험 작업 인원</div></div>
+      <div class="stat-card"><div class="num" id="stat-total-people">0</div><div class="label" data-i18n="stat_total_people">전체 출력인원</div></div>
       <div class="stat-card"><div class="num" id="stat-total-works">0</div><div class="label" data-i18n="stat_total_works">전체 작업 건수</div></div>
+      <div class="stat-card high"><div class="num" id="stat-high-people">0</div><div class="label" data-i18n="stat_high_people">고위험 작업 인원</div></div>
       <div class="stat-card high"><div class="num" id="stat-high">0</div><div class="label" data-i18n="stat_high">고위험 건수</div></div>
       <div class="stat-card"><div class="num" id="stat-vulnerable-people">0</div><div class="label" data-i18n="stat_vulnerable_people">취약근로자 인원</div></div>
     </div>
@@ -1174,6 +1178,7 @@ const db = getFirestore(fbApp);
       sidebar_title: "주요 작업목록",
       sidebar_subtitle: "고위험 작업만 표시됩니다",
       stat_total_people: "총 출역 인원",
+      stat_total_people: "전체 출력인원",
       stat_high_people: "고위험 작업 인원",
       stat_total_works: "전체 작업 건수",
       stat_high: "고위험 건수",
@@ -1406,6 +1411,7 @@ const db = getFirestore(fbApp);
       sidebar_title: "主要作业列表",
       sidebar_subtitle: "仅显示高风险作业",
       stat_total_people: "总出勤人数",
+      stat_total_people: "全体出勤人数",
       stat_high_people: "高风险作业人数",
       stat_total_works: "全部作业件数",
       stat_high: "高风险件数",
@@ -1638,6 +1644,7 @@ const db = getFirestore(fbApp);
       sidebar_title: "Key work list",
       sidebar_subtitle: "Only high-risk work is shown",
       stat_total_people: "Total workers",
+      stat_total_people: "Total workforce",
       stat_high_people: "High-risk work workers",
       stat_total_works: "Total work items",
       stat_high: "High-risk count",
@@ -3826,6 +3833,7 @@ const db = getFirestore(fbApp);
   function renderStats(){
     const vis = visibleMarkers();
     const highPeople = vis.filter(m=>m.risk==='high').reduce((s,m)=>s+(Number(m.people)||0),0);
+    $('stat-total-people').textContent = vis.reduce((s,m)=>s+(Number(m.people)||0),0);
     $('stat-high-people').textContent = highPeople;
     $('stat-total-works').textContent = vis.length;
     $('stat-high').textContent = vis.filter(m=>m.risk==='high').length;
