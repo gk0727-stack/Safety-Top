@@ -442,10 +442,10 @@
   .work-card.bulk-mode{ cursor:pointer; }
   .work-card.bulk-selected{ outline:3px solid var(--accent); outline-offset:-1px; background:var(--accent-bg); }
 
-  .staff-role-tabs{ display:flex; gap:8px; margin-bottom:10px; }
+  .staff-role-tabs{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
   .staff-role-tab{
-    flex:1; padding:9px 10px; border-radius:8px; border:2px solid var(--border);
-    background:var(--panel-2); color:var(--text-muted); font-size:13.5px; font-weight:700;
+    flex:1 1 calc(50% - 8px); min-width:110px; padding:9px 8px; border-radius:8px; border:2px solid var(--border);
+    background:var(--panel-2); color:var(--text-muted); font-size:12.5px; font-weight:700; line-height:1.3;
   }
   .staff-role-tab.active{ background:var(--accent-bg); border-color:var(--accent); color:var(--accent); }
   .staff-check-list{ display:flex; flex-wrap:wrap; gap:8px; }
@@ -458,12 +458,13 @@
   .staff-chip .role-tag{ font-size:11.5px; color:var(--text-dim); font-weight:600; }
   .staff-chip.checked{ background:var(--accent-bg); border-color:var(--accent); color:var(--accent); }
   .staff-chip.checked .role-tag{ color:var(--accent); opacity:0.8; }
+  .staff-chip .area-chip-remove{ margin-left:2px; }
 
   .equip-chip-list{ display:flex; flex-wrap:wrap; gap:8px; }
   .equip-chip{
     display:flex; align-items:center; gap:6px; padding:9px 14px; border-radius:20px;
     border:2px solid var(--border); background:var(--panel-2); font-size:14px; font-weight:600;
-    color:var(--text-muted); cursor:pointer; user-select:none;
+    color:var(--text-muted); user-select:none;
   }
   .equip-chip.checked{ background:var(--accent-bg); border-color:var(--accent); color:var(--accent); }
   .equip-chip .equip-qty{ display:flex; align-items:center; gap:5px; margin-left:2px; }
@@ -473,6 +474,7 @@
     cursor:pointer; padding:0; flex-shrink:0;
   }
   .equip-chip .equip-qty-num{ min-width:14px; text-align:center; font-weight:800; }
+  .equip-chip .area-chip-remove{ margin-left:2px; }
 
   .equip-summary{
     grid-area:equip; background:var(--panel); border:1px solid var(--border); border-radius:12px;
@@ -719,7 +721,8 @@
 
       <div class="field">
         <label data-i18n="label_equipment">투입 장비 (선택)</label>
-        <div class="equip-chip-list" id="f-equip-list"></div>
+        <select id="f-equip-select"></select>
+        <div class="equip-chip-list" id="f-equip-list" style="margin-top:8px;"></div>
         <div id="equip-other-wrap" style="display:none; margin-top:8px;">
           <input type="text" id="f-equip-other" data-i18n-placeholder="equip_other_ph" placeholder="예: 스카이차, 진동롤러 (쉼표로 구분)">
         </div>
@@ -727,7 +730,10 @@
 
       <div class="field">
         <label data-i18n="label_status">작업 상태</label>
-        <button type="button" class="btn" id="status-toggle-btn">🔵 진행중</button>
+        <select id="f-status">
+          <option value="in_progress" data-i18n="status_inprogress">진행중</option>
+          <option value="done" data-i18n="status_done">완료</option>
+        </select>
       </div>
 
       <div class="field">
@@ -746,8 +752,10 @@
         <div class="staff-role-tabs" id="staff-role-tabs">
           <button type="button" class="staff-role-tab active" data-role-group="safety" data-i18n="staff_tab_safety">안전관리자/안전감시단</button>
           <button type="button" class="staff-role-tab" data-role-group="supervisor" data-i18n="staff_tab_supervisor">관리감독자</button>
+          <button type="button" class="staff-role-tab" data-role-group="partner" data-i18n="staff_tab_partner">협력업체 관리감독자</button>
         </div>
-        <div class="staff-check-list" id="f-supervisor-checks"></div>
+        <select id="f-staff-select"></select>
+        <div class="staff-check-list" id="f-supervisor-checks" style="margin-top:8px;"></div>
         <div class="hint-text" id="staff-hint" style="display:none;" data-i18n="staff_hint">등록된 담당자가 없습니다. 관리 탭 → 담당자 관리에서 먼저 등록해주세요.</div>
       </div>
       <div class="field"><label data-i18n="label_note">메모 (안전조치 등)</label><textarea id="f-note" placeholder="예: 안전대 체결 확인, 신호수 배치" data-i18n-placeholder="note_ph"></textarea></div>
@@ -1039,6 +1047,7 @@
         <option value="관리감독자" data-i18n="role_supervisor">관리감독자</option>
         <option value="안전관리자" data-i18n="role_safety_manager">안전관리자</option>
         <option value="안전감시단" data-i18n="role_safety_watch">안전감시단</option>
+        <option value="협력업체 관리감독자" data-i18n="role_partner_supervisor">협력업체 관리감독자</option>
         <option value="안전보건총괄책임자" data-i18n="role_safety_chief">안전보건총괄책임자</option>
       </select>
     </div>
@@ -1131,7 +1140,6 @@ const db = getFirestore(fbApp);
   let markers = [];          // works for currentDate [{id,zoneId,workType,risk,people,time,company,note,supervisor}]
   let editingId = null;
   let selectedRisk = 'high';
-  let workStatus = 'in_progress';
   let mapImageURL = null;
 
   let placing = false;
@@ -1202,6 +1210,7 @@ const db = getFirestore(fbApp);
       equip_concrete_mixer: "레미콘",
       equip_concrete_pump: "콘크리트펌프카",
       equip_other: "기타(직접입력)",
+      equip_select_ph: "+ 장비 추가",
       equip_summary_title: "🚜 장비현황",
       equip_summary_empty: "오늘 등록된 장비가 없습니다.",
       label_status: "작업 상태",
@@ -1265,6 +1274,7 @@ const db = getFirestore(fbApp);
       role_safety_manager: "안전관리자",
       role_safety_watch: "안전감시단",
       role_safety_chief: "안전보건총괄책임자",
+      role_partner_supervisor: "협력업체 관리감독자",
       role_other: "기타",
       staff_save_error: "저장에 실패하였습니다. 잠시 후 다시 시도해주세요.",
       manage_panel_title: "🔧 관리자 패널",
@@ -1373,7 +1383,11 @@ const db = getFirestore(fbApp);
       zone_select_placeholder: "위치를 선택하세요",
       staff_tab_safety: "안전관리자/안전감시단",
       staff_tab_supervisor: "관리감독자",
-      staff_group_empty: "이 분류에 등록된 담당자가 없습니다."
+      staff_tab_partner: "협력업체 관리감독자",
+      staff_group_empty: "이 분류에 등록된 담당자가 없습니다.",
+      staff_select_ph: "+ 담당자 추가",
+      staff_all_selected: "모두 선택됨",
+      staff_none_selected: "선택된 담당자가 없습니다."
     },
     zh: {
       manage_title: "管理",
@@ -1428,6 +1442,7 @@ const db = getFirestore(fbApp);
       equip_concrete_mixer: "混凝土搅拌车",
       equip_concrete_pump: "混凝土泵车",
       equip_other: "其他（直接输入）",
+      equip_select_ph: "+ 添加设备",
       equip_summary_title: "🚜 设备现况",
       equip_summary_empty: "今日没有登记的设备。",
       label_status: "作业状态",
@@ -1491,6 +1506,7 @@ const db = getFirestore(fbApp);
       role_safety_manager: "安全管理员",
       role_safety_watch: "安全监视团",
       role_safety_chief: "安全保健总责人",
+      role_partner_supervisor: "协作公司管理监督者",
       role_other: "其他",
       staff_save_error: "保存失败，请稍后重试。",
       manage_panel_title: "🔧 管理员面板",
@@ -1599,7 +1615,11 @@ const db = getFirestore(fbApp);
       zone_select_placeholder: "请选择位置",
       staff_tab_safety: "安全管理者/安全监视组",
       staff_tab_supervisor: "管理监督者",
-      staff_group_empty: "该分类下没有登记的负责人。"
+      staff_tab_partner: "协作公司管理监督者",
+      staff_group_empty: "该分类下没有登记的负责人。",
+      staff_select_ph: "+ 添加负责人",
+      staff_all_selected: "已全部选择",
+      staff_none_selected: "尚未选择负责人。"
     },
     en: {
       manage_title: "Manage",
@@ -1654,6 +1674,7 @@ const db = getFirestore(fbApp);
       equip_concrete_mixer: "Concrete mixer truck",
       equip_concrete_pump: "Concrete pump car",
       equip_other: "Other (custom)",
+      equip_select_ph: "+ Add equipment",
       equip_summary_title: "🚜 Equipment status",
       equip_summary_empty: "No equipment registered today.",
       label_status: "Work status",
@@ -1717,6 +1738,7 @@ const db = getFirestore(fbApp);
       role_safety_manager: "Safety manager",
       role_safety_watch: "Safety watch",
       role_safety_chief: "Chief safety officer",
+      role_partner_supervisor: "Partner Company Supervisor",
       role_other: "Other",
       staff_save_error: "Save failed. Please try again in a moment.",
       manage_panel_title: "🔧 Admin panel",
@@ -1825,7 +1847,11 @@ const db = getFirestore(fbApp);
       zone_select_placeholder: "Select a location",
       staff_tab_safety: "Safety Manager/Safety Watch",
       staff_tab_supervisor: "Supervisor",
-      staff_group_empty: "No staff registered in this category."
+      staff_tab_partner: "Partner Company Supervisor",
+      staff_group_empty: "No staff registered in this category.",
+      staff_select_ph: "+ Add staff",
+      staff_all_selected: "All selected",
+      staff_none_selected: "No staff selected."
     }
   };
 
@@ -1840,6 +1866,7 @@ const db = getFirestore(fbApp);
       '관리감독자': 'role_supervisor',
       '안전관리자': 'role_safety_manager',
       '안전감시단': 'role_safety_watch',
+      '협력업체 관리감독자': 'role_partner_supervisor',
       '안전보건총괄책임자': 'role_safety_chief'
     };
     const key = map[role];
@@ -1870,10 +1897,11 @@ const db = getFirestore(fbApp);
     safeCall(typeof renderStaffPageList === 'function' ? renderStaffPageList : null);
     safeCall(typeof renderZoneManageList === 'function' ? renderZoneManageList : null);
     safeCall(typeof updateRiskButtons === 'function' ? updateRiskButtons : null);
-    safeCall(typeof updateStatusToggleBtn === 'function' ? updateStatusToggleBtn : null);
     safeCall(typeof updateAreaStatusText === 'function' ? updateAreaStatusText : null);
     safeCall(typeof updateWorktypeSuggestions === 'function' ? updateWorktypeSuggestions : null);
     safeCall(typeof setAdminUI === 'function' ? setAdminUI : null);
+    safeCall(typeof renderEquipList === 'function' ? renderEquipList : null);
+    safeCall(typeof renderStaffChecklist === 'function' ? renderStaffChecklist : null);
   }
 
   function setLanguage(lang){
@@ -2824,7 +2852,7 @@ const db = getFirestore(fbApp);
   const staffPage = $('page-staff');
   const staffNameBackdrop = $('staff-name-backdrop');
   let staffEditId = null;
-  const STAFF_ROLE_ORDER = ['관리감독자','안전관리자','안전감시단','안전보건총괄책임자'];
+  const STAFF_ROLE_ORDER = ['관리감독자','안전관리자','안전감시단','협력업체 관리감독자','안전보건총괄책임자'];
 
   function openStaffPage(){
     closeAllPages();
@@ -3077,46 +3105,76 @@ const db = getFirestore(fbApp);
     });
   });
 
-  // 작업등록 화면의 감시단/안전담당자 체크리스트: 안전관리자·안전감시단 / 관리감독자 2개 탭으로 구분.
-  // 안전보건총괄책임자는 여기서는 선택 대상에서 제외한다.
+  // 작업등록 화면의 감시단/안전담당자 체크리스트: 안전관리자·안전감시단 / 관리감독자 /
+  // 협력업체 관리감독자 3개 탭으로 구분. 안전보건총괄책임자는 여기서는 선택 대상에서 제외한다.
   const STAFF_CHECKLIST_ROLE_GROUPS = {
     safety: ['안전관리자', '안전감시단'],
-    supervisor: ['관리감독자']
+    supervisor: ['관리감독자'],
+    partner: ['협력업체 관리감독자']
   };
   let staffChecklistRoleGroup = 'safety';
   let staffChecklistSelected = new Set();
+
+  // 담당자는 드롭다운(풀다운)에서 골라 추가하고, 추가된 사람은 아래에 칩으로
+  // 표시되며 × 버튼으로 제거한다. 탭(안전관리자/안전감시단 ↔ 관리감독자)은
+  // 드롭다운에 어떤 후보를 보여줄지만 바꾸고, 이미 선택된 담당자는 탭을
+  // 전환해도 그대로 유지된다.
+  function populateStaffSelect(){
+    const sel = $('f-staff-select');
+    if(!sel) return;
+    const allowedRoles = STAFF_CHECKLIST_ROLE_GROUPS[staffChecklistRoleGroup] || [];
+    const group = staffList.filter(s=>allowedRoles.includes(s.role));
+    const candidates = group.filter(s=>!staffChecklistSelected.has(s.name));
+    let placeholder;
+    if(group.length === 0) placeholder = t('staff_group_empty');
+    else if(candidates.length === 0) placeholder = t('staff_all_selected');
+    else placeholder = t('staff_select_ph');
+    let html = `<option value="">${escapeHTML(placeholder)}</option>`;
+    candidates.forEach(s=>{
+      html += `<option value="${escapeHTML(s.name)}">${escapeHTML(s.name)} · ${escapeHTML(roleLabel(s.role||''))}</option>`;
+    });
+    sel.innerHTML = html;
+    sel.value = '';
+    sel.disabled = candidates.length === 0;
+  }
 
   function renderStaffChecklist(selectedNames){
     if(Array.isArray(selectedNames)){
       staffChecklistSelected = new Set(selectedNames);
     }
     const wrap = $('f-supervisor-checks');
-    wrap.innerHTML = '';
     if(staffList.length === 0){
       $('staff-hint').style.display = 'block';
+      wrap.innerHTML = '';
+      populateStaffSelect();
       return;
     }
     $('staff-hint').style.display = 'none';
-    const allowedRoles = STAFF_CHECKLIST_ROLE_GROUPS[staffChecklistRoleGroup] || [];
-    const filtered = staffList.filter(s=>allowedRoles.includes(s.role));
-    if(filtered.length === 0){
-      wrap.innerHTML = `<div class="hint-text" style="margin:0;">${escapeHTML(t('staff_group_empty'))}</div>`;
-      return;
+    if(staffChecklistSelected.size === 0){
+      wrap.innerHTML = `<div class="hint-text" style="margin:0;">${escapeHTML(t('staff_none_selected'))}</div>`;
+    } else {
+      wrap.innerHTML = [...staffChecklistSelected].map(name=>{
+        const staffObj = staffList.find(s=>s.name===name);
+        const roleTxt = staffObj ? roleLabel(staffObj.role||'') : '';
+        return `<span class="staff-chip checked">${escapeHTML(name)}`
+          + (roleTxt ? ` <span class="role-tag">${escapeHTML(roleTxt)}</span>` : '')
+          + `<button type="button" class="area-chip-remove" data-name="${escapeHTML(name)}" aria-label="remove">×</button></span>`;
+      }).join('');
     }
-    filtered.forEach(s=>{
-      const label = document.createElement('label');
-      label.className = 'staff-chip';
-      const checked = staffChecklistSelected.has(s.name);
-      if(checked) label.classList.add('checked');
-      label.innerHTML = `<input type="checkbox" value="${escapeHTML(s.name)}" ${checked?'checked':''}> ${escapeHTML(s.name)} <span class="role-tag">${escapeHTML(roleLabel(s.role||''))}</span>`;
-      label.querySelector('input').addEventListener('change', (e)=>{
-        label.classList.toggle('checked', e.target.checked);
-        if(e.target.checked) staffChecklistSelected.add(s.name);
-        else staffChecklistSelected.delete(s.name);
-      });
-      wrap.appendChild(label);
-    });
+    populateStaffSelect();
   }
+  $('f-supervisor-checks').addEventListener('click', (e)=>{
+    const btn = e.target.closest('.area-chip-remove');
+    if(!btn) return;
+    staffChecklistSelected.delete(btn.dataset.name);
+    renderStaffChecklist();
+  });
+  $('f-staff-select').addEventListener('change', (e)=>{
+    const name = e.target.value;
+    if(!name) return;
+    staffChecklistSelected.add(name);
+    renderStaffChecklist();
+  });
   document.querySelectorAll('.staff-role-tab').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       staffChecklistRoleGroup = btn.dataset.roleGroup;
@@ -3138,28 +3196,38 @@ const db = getFirestore(fbApp);
   let currentEquipment = []; // [{type, count}] - 고정 종류만 (기타는 f-equip-other 텍스트에 별도 저장)
   let equipOtherOpen = false;
 
+  // 장비는 드롭다운(풀다운)에서 종류를 골라 추가한다. 추가되면 아래에 칩으로
+  // 표시되고, 수량은 +/- 스테퍼로, 제거는 × 버튼으로 한다. "기타"를 고르면
+  // 직접입력 텍스트칸이 열린다.
+  function populateEquipSelect(){
+    const sel = $('f-equip-select');
+    if(!sel) return;
+    let html = `<option value="">${escapeHTML(t('equip_select_ph'))}</option>`;
+    EQUIPMENT_TYPES.forEach(type=>{
+      if(currentEquipment.find(e=>e.type===type)) return; // 이미 추가된 건 목록에서 빼서 중복 추가 방지
+      html += `<option value="${type}">${EQUIPMENT_ICONS[type]} ${escapeHTML(equipLabel(type))}</option>`;
+    });
+    html += `<option value="other">${EQUIPMENT_ICONS.other} ${escapeHTML(equipLabel('other'))}</option>`;
+    sel.innerHTML = html;
+    sel.value = '';
+  }
+
   function renderEquipList(){
     const wrap = $('f-equip-list');
     if(!wrap) return;
-    let html = '';
-    EQUIPMENT_TYPES.forEach(type=>{
-      const entry = currentEquipment.find(e=>e.type===type);
-      const checked = !!entry;
-      html += `<button type="button" class="equip-chip${checked?' checked':''}" data-equip="${type}">`
-        + `<span>${EQUIPMENT_ICONS[type]}</span><span>${escapeHTML(equipLabel(type))}</span>`;
-      if(checked){
-        html += `<span class="equip-qty">`
-          + `<button type="button" class="equip-qty-btn" data-act="dec" data-equip="${type}">−</button>`
+    wrap.innerHTML = currentEquipment.map(entry=>{
+      return `<span class="equip-chip checked" data-equip="${entry.type}">`
+        + `<span>${EQUIPMENT_ICONS[entry.type]}</span><span>${escapeHTML(equipLabel(entry.type))}</span>`
+        + `<span class="equip-qty">`
+          + `<button type="button" class="equip-qty-btn" data-act="dec" data-equip="${entry.type}">−</button>`
           + `<span class="equip-qty-num">${entry.count}</span>`
-          + `<button type="button" class="equip-qty-btn" data-act="inc" data-equip="${type}">＋</button>`
-          + `</span>`;
-      }
-      html += `</button>`;
-    });
-    html += `<button type="button" class="equip-chip${equipOtherOpen?' checked':''}" data-equip="other">`
-      + `<span>${EQUIPMENT_ICONS.other}</span><span>${escapeHTML(equipLabel('other'))}</span></button>`;
-    wrap.innerHTML = html;
+          + `<button type="button" class="equip-qty-btn" data-act="inc" data-equip="${entry.type}">＋</button>`
+          + `</span>`
+        + `<button type="button" class="area-chip-remove" data-equip="${entry.type}" aria-label="remove">×</button>`
+        + `</span>`;
+    }).join('');
     $('equip-other-wrap').style.display = equipOtherOpen ? 'block' : 'none';
+    populateEquipSelect();
   }
 
   function resetEquipmentState(){
@@ -3180,6 +3248,21 @@ const db = getFirestore(fbApp);
     renderEquipList();
   }
 
+  $('f-equip-select').addEventListener('change', (e)=>{
+    const type = e.target.value;
+    if(!type) return;
+    if(type === 'other'){
+      equipOtherOpen = true;
+      renderEquipList();
+      setTimeout(()=>$('f-equip-other').focus(), 50);
+      return;
+    }
+    if(!currentEquipment.find(x=>x.type===type)){
+      currentEquipment.push({ type, count:1 });
+    }
+    renderEquipList();
+  });
+
   $('f-equip-list').addEventListener('click', (e)=>{
     const qtyBtn = e.target.closest('.equip-qty-btn');
     if(qtyBtn){
@@ -3197,22 +3280,11 @@ const db = getFirestore(fbApp);
       renderEquipList();
       return;
     }
-    const chip = e.target.closest('.equip-chip');
-    if(!chip) return;
-    const type = chip.dataset.equip;
-    if(type === 'other'){
-      equipOtherOpen = !equipOtherOpen;
+    const removeBtn = e.target.closest('.area-chip-remove');
+    if(removeBtn){
+      currentEquipment = currentEquipment.filter(x=>x.type!==removeBtn.dataset.equip);
       renderEquipList();
-      if(equipOtherOpen) setTimeout(()=>$('f-equip-other').focus(), 50);
-      return;
     }
-    const entry = currentEquipment.find(x=>x.type===type);
-    if(entry){
-      currentEquipment = currentEquipment.filter(x=>x.type!==type);
-    } else {
-      currentEquipment.push({ type, count:1 });
-    }
-    renderEquipList();
   });
 
   function collectEquipmentFromForm(){
@@ -3839,8 +3911,7 @@ const db = getFirestore(fbApp);
     $('f-note').value = m ? m.note : '';
     selectedRisk = m ? m.risk : 'high';
     updateRiskButtons();
-    workStatus = (m && !duplicateFrom) ? (m.status || 'in_progress') : 'in_progress';
-    updateStatusToggleBtn();
+    $('f-status').value = (m && !duplicateFrom) ? (m.status || 'in_progress') : 'in_progress';
     pendingAreas = m ? getMarkerAreas(m).map(a=>({ ...a })) : [];
     updateAreaStatusText();
     $('delete-btn').style.display = (m && !duplicateFrom) ? 'block' : 'none';
@@ -4303,21 +4374,6 @@ const db = getFirestore(fbApp);
     document.querySelectorAll('.risk-choice button').forEach(btn=> btn.classList.toggle('on', btn.dataset.risk===selectedRisk));
   }
 
-  $('status-toggle-btn').addEventListener('click', ()=>{
-    workStatus = workStatus === 'done' ? 'in_progress' : 'done';
-    updateStatusToggleBtn();
-  });
-  function updateStatusToggleBtn(){
-    const btn = $('status-toggle-btn');
-    if(workStatus === 'done'){
-      btn.textContent = '✅ ' + t('status_done');
-      btn.classList.add('status-done');
-    } else {
-      btn.textContent = '🔵 ' + t('status_inprogress');
-      btn.classList.remove('status-done');
-    }
-  }
-
   $('save-btn').addEventListener('click', async ()=>{
     const zoneId = $('f-zone').value;
     const workType = $('f-worktype').value.trim();
@@ -4330,7 +4386,7 @@ const db = getFirestore(fbApp);
     const supervisor = [...staffChecklistSelected].join(', ');
     const note = $('f-note').value.trim();
     const areas = pendingAreas.length ? pendingAreas.map(a=>({ ...a })) : null;
-    const status = workStatus;
+    const status = $('f-status').value || 'in_progress';
     const equipment = collectEquipmentFromForm();
 
     const errEl = $('work-form-error');
