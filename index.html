@@ -537,6 +537,21 @@
   .report-item .content{ font-size:14px; color:var(--text); margin-bottom:4px; white-space:pre-wrap; word-break:break-word; }
   .report-item .meta{ font-size:12px; color:var(--text-dim); }
   .report-item .del-btn{ background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:18px; padding:4px; flex-shrink:0; }
+  .report-item img{ cursor:zoom-in; }
+  .report-type-tabs{ display:flex; gap:8px; margin-bottom:14px; }
+  .report-type-tab{
+    flex:1; padding:11px 10px; border-radius:10px; border:2px solid var(--border);
+    background:var(--panel-2); color:var(--text-muted); font-size:14.5px; font-weight:700;
+  }
+  .report-type-tab.active{ background:var(--accent-bg); border-color:var(--accent); color:var(--accent); }
+  .report-type-tab.active[data-type="near_miss"]{ background:#FFF4E5; border-color:#EA580C; color:#9A3412; }
+  .near-miss-count{ font-size:13px; font-weight:700; color:var(--text-dim); }
+  .photo-lightbox{
+    position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:3000;
+    display:none; align-items:center; justify-content:center; padding:16px; cursor:zoom-out;
+  }
+  .photo-lightbox.show{ display:flex; }
+  .photo-lightbox img{ max-width:100%; max-height:100%; border-radius:8px; }
 
   /* ---------- Management panel ---------- */
   .mgmt-actions{ display:flex; flex-direction:column; gap:9px; }
@@ -875,10 +890,15 @@
     <div class="page-inner">
       <div class="page-header">
         <button class="page-back" id="report-page-back-btn" data-i18n="back">← 뒤로</button>
-        <h2 data-i18n="report_title">안전개선신고</h2>
+        <h2 data-i18n="report_page_title">안전신고</h2>
       </div>
 
-      <div class="hint-text" style="margin-top:0; margin-bottom:16px;" data-i18n="report_intro">현장의 위험한 상황이나 아차사고를 사진과 함께 신고해주세요. 신고 내용은 관리자만 확인합니다.</div>
+      <div class="report-type-tabs" id="report-type-tabs">
+        <button type="button" class="report-type-tab active" data-type="hazard" data-i18n="report_type_hazard">🛠️ 안전개선 신고</button>
+        <button type="button" class="report-type-tab" data-type="near_miss" data-i18n="report_type_near_miss">⚠️ 아차사고 등록</button>
+      </div>
+
+      <div class="hint-text" id="report-intro" style="margin-top:0; margin-bottom:16px;">현장의 위험한 상황을 사진과 함께 신고해주세요. 신고 내용은 관리자만 확인합니다.</div>
 
       <div class="field">
         <label data-i18n="report_photo_label">사진</label>
@@ -891,22 +911,33 @@
       </div>
 
       <div class="field">
-        <label data-i18n="report_content_label">신고 내용</label>
-        <textarea id="report-content" placeholder="예: 3층 비계 발판 일부 파손, 넘어질 뻔함" data-i18n-placeholder="report_content_ph"></textarea>
+        <label id="report-content-label">신고 내용</label>
+        <textarea id="report-content" placeholder="예: 3층 비계 발판 일부 파손"></textarea>
       </div>
 
       <div class="hint-text" id="report-form-error" style="display:none; font-weight:700;"></div>
 
       <div class="modal-actions">
-        <button class="btn primary" id="report-submit-btn" style="width:100%; justify-content:center;" data-i18n="report_submit_btn">신고하기</button>
+        <button class="btn primary" id="report-submit-btn" style="width:100%; justify-content:center;">신고하기</button>
       </div>
 
+      <!-- 아차사고 목록: 모든 근로자가 볼 수 있음 (삭제는 관리자만) -->
+      <div id="near-miss-list-section" style="display:none; margin-top:32px; padding-top:24px; border-top:1px solid var(--border);">
+        <h3 style="margin-bottom:14px;"><span data-i18n="near_miss_list_title">📋 아차사고 목록</span> <span class="near-miss-count" id="near-miss-count"></span></h3>
+        <div id="near-miss-list" class="report-list"></div>
+      </div>
+
+      <div id="hazard-list-wrap">
       <div class="admin-only" id="report-list-section" style="display:none; margin-top:32px; padding-top:24px; border-top:1px solid var(--border);">
         <h3 style="margin-bottom:14px;" data-i18n="report_list_title">📋 접수된 신고 내역 (관리자 전용)</h3>
         <div id="report-list" class="report-list"></div>
       </div>
+      </div>
     </div>
   </div>
+
+<!-- 신고 사진 크게 보기 -->
+<div class="photo-lightbox" id="photo-lightbox"><img id="photo-lightbox-img" alt=""></div>
 
 </div>
 
@@ -1348,6 +1379,22 @@ const db = getFirestore(fbApp);
       report_list_title: "📋 접수된 신고 내역 (관리자 전용)",
       report_list_empty: "아직 접수된 신고가 없습니다.",
       report_delete_confirm: "이 신고 내역을 삭제할까요?",
+      report_page_title: "안전신고",
+      report_type_hazard: "🛠️ 안전개선 신고",
+      report_type_near_miss: "⚠️ 아차사고 등록",
+      report_intro_hazard: "현장의 위험한 상황을 사진과 함께 신고해주세요. 신고 내용은 관리자만 확인합니다.",
+      report_intro_near_miss: "사고로 이어질 뻔했던 상황(아차사고)을 사진과 함께 등록해주세요. 등록된 아차사고는 모든 근로자가 함께 보고 같은 사고를 예방합니다.",
+      near_miss_content_label: "아차사고 내용",
+      near_miss_content_ph: "예: 2층 개구부 주변 이동 중 발이 빠질 뻔함 (언제·어디서·어떻게)",
+      near_miss_submit_btn: "아차사고 등록",
+      near_miss_submitting: "🔄 등록 중...",
+      near_miss_content_required: "⚠ 아차사고 내용을 입력해주세요.",
+      near_miss_submit_success: "✅ 아차사고가 등록되었습니다. 공유해주셔서 감사합니다.",
+      near_miss_submit_error: "❌ 등록에 실패했습니다. 잠시 후 다시 시도해주세요.",
+      near_miss_list_title: "📋 아차사고 목록",
+      near_miss_list_empty: "아직 등록된 아차사고가 없습니다.",
+      near_miss_delete_confirm: "이 아차사고를 삭제할까요?",
+      count_items: "건",
       dayclose_btn: "🌙  하루 마감",
       dayclose_confirm: (count,date)=>`${date} 날짜의 진행중인 작업 ${count}건을 모두 완료 처리합니다.\n계속할까요?`,
       dayclose_none: "진행중인 작업이 없습니다.",
@@ -1581,6 +1628,22 @@ const db = getFirestore(fbApp);
       report_list_title: "📋 举报记录(仅管理员)",
       report_list_empty: "暂无举报记录。",
       report_delete_confirm: "确定要删除这条举报记录吗?",
+      report_page_title: "安全举报",
+      report_type_hazard: "🛠️ 安全改善举报",
+      report_type_near_miss: "⚠️ 登记未遂事故",
+      report_intro_hazard: "请拍照举报现场的危险情况。举报内容仅管理员可查看。",
+      report_intro_near_miss: "请拍照登记险些发生事故的情况（未遂事故）。登记的未遂事故所有劳动者都可以查看，以预防同类事故。",
+      near_miss_content_label: "未遂事故内容",
+      near_miss_content_ph: "例：在2楼开口部附近移动时险些踩空（时间·地点·经过）",
+      near_miss_submit_btn: "登记未遂事故",
+      near_miss_submitting: "🔄 正在登记...",
+      near_miss_content_required: "⚠ 请输入未遂事故内容。",
+      near_miss_submit_success: "✅ 未遂事故已登记，感谢分享。",
+      near_miss_submit_error: "❌ 登记失败，请稍后重试。",
+      near_miss_list_title: "📋 未遂事故列表",
+      near_miss_list_empty: "暂无登记的未遂事故。",
+      near_miss_delete_confirm: "确定要删除这条未遂事故吗？",
+      count_items: "件",
       dayclose_btn: "🌙  结束当日",
       dayclose_confirm: (count,date)=>`将${date}的${count}件进行中作业全部标记为完成。\n是否继续?`,
       dayclose_none: "没有进行中的作业。",
@@ -1814,6 +1877,22 @@ const db = getFirestore(fbApp);
       report_list_title: "📋 Submitted reports (admin only)",
       report_list_empty: "No reports submitted yet.",
       report_delete_confirm: "Delete this report?",
+      report_page_title: "Safety Report",
+      report_type_hazard: "🛠️ Hazard report",
+      report_type_near_miss: "⚠️ Near miss",
+      report_intro_hazard: "Report hazardous conditions on site with a photo. Reports are visible to admins only.",
+      report_intro_near_miss: "Register situations that almost caused an accident (near misses) with a photo. Near misses are visible to all workers to help prevent similar accidents.",
+      near_miss_content_label: "Near miss details",
+      near_miss_content_ph: "e.g. Almost stepped into a floor opening on level 2 (when, where, how)",
+      near_miss_submit_btn: "Register near miss",
+      near_miss_submitting: "🔄 Registering...",
+      near_miss_content_required: "⚠ Please describe the near miss.",
+      near_miss_submit_success: "✅ Near miss registered. Thank you for sharing.",
+      near_miss_submit_error: "❌ Failed to register. Please try again later.",
+      near_miss_list_title: "📋 Near miss list",
+      near_miss_list_empty: "No near misses registered yet.",
+      near_miss_delete_confirm: "Delete this near miss?",
+      count_items: "",
       dayclose_btn: "🌙  Close out day",
       dayclose_confirm: (count,date)=>`Mark all ${count} in-progress work items on ${date} as done.\nContinue?`,
       dayclose_none: "There are no in-progress work items.",
@@ -1935,6 +2014,8 @@ const db = getFirestore(fbApp);
     safeCall(typeof renderEquipList === 'function' ? renderEquipList : null);
     safeCall(typeof renderStaffChecklist === 'function' ? renderStaffChecklist : null);
     safeCall(typeof renderWeatherAlert === 'function' ? renderWeatherAlert : null);
+    safeCall(typeof applyReportTypeUI === 'function' ? applyReportTypeUI : null);
+    safeCall(typeof renderReportList === 'function' ? renderReportList : null);
   }
 
   function setLanguage(lang){
@@ -2988,6 +3069,12 @@ const db = getFirestore(fbApp);
   // 신고 내용이 노출되지 않게 한다.
   let hazardReports = [];
   let reportPhotoDataURL = null;
+  // 안전신고 화면은 "안전개선 신고"(관리자만 열람)와 "아차사고"(전 근로자 열람)
+  // 두 종류를 탭으로 전환한다. 둘 다 같은 hazard_reports 컬렉션에 저장하되
+  // type 필드로 구분한다(type이 없는 예전 신고는 안전개선 신고로 취급).
+  // → Firestore 보안 규칙을 새로 추가할 필요가 없다.
+  let reportType = 'hazard'; // 'hazard' | 'near_miss'
+  const isNearMiss = (r)=> r && r.type === 'near_miss';
 
   const reportPhotoInput = $('report-photo-input');
   const reportPhotoPreview = $('report-photo-preview');
@@ -3002,8 +3089,29 @@ const db = getFirestore(fbApp);
     reportPage.style.display = 'block';
     setActiveTab('report');
     resetReportForm();
+    applyReportTypeUI();
     renderReportList();
   }
+
+  function applyReportTypeUI(){
+    const nm = reportType === 'near_miss';
+    document.querySelectorAll('.report-type-tab').forEach(b=> b.classList.toggle('active', b.dataset.type === reportType));
+    $('report-intro').textContent = t(nm ? 'report_intro_near_miss' : 'report_intro_hazard');
+    $('report-content-label').textContent = t(nm ? 'near_miss_content_label' : 'report_content_label');
+    reportContentInput.placeholder = t(nm ? 'near_miss_content_ph' : 'report_content_ph');
+    if(!reportSubmitBtn.disabled) reportSubmitBtn.textContent = t(nm ? 'near_miss_submit_btn' : 'report_submit_btn');
+    $('near-miss-list-section').style.display = nm ? 'block' : 'none';
+    $('hazard-list-wrap').style.display = nm ? 'none' : 'block';
+  }
+  document.querySelectorAll('.report-type-tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(reportType === btn.dataset.type) return;
+      reportType = btn.dataset.type;
+      reportFormError.style.display = 'none';
+      applyReportTypeUI();
+      renderReportList();
+    });
+  });
   $('report-page-back-btn').addEventListener('click', ()=>{ closeAllPages(); setActiveTab('dashboard'); });
 
   function resetReportForm(){
@@ -3065,20 +3173,21 @@ const db = getFirestore(fbApp);
       reportFormError.style.display = 'block';
       return;
     }
+    const nm = reportType === 'near_miss';
     if(!content){
       reportFormError.style.color = 'var(--high)';
-      reportFormError.textContent = t('report_content_required');
+      reportFormError.textContent = t(nm ? 'near_miss_content_required' : 'report_content_required');
       reportFormError.style.display = 'block';
       reportContentInput.focus();
       return;
     }
     reportFormError.style.display = 'none';
     reportSubmitBtn.disabled = true;
-    const prevText = reportSubmitBtn.textContent;
-    reportSubmitBtn.textContent = t('report_submitting');
+    reportSubmitBtn.textContent = t(nm ? 'near_miss_submitting' : 'report_submitting');
     try{
       await Promise.race([
         addDoc(collection(db,'hazard_reports'), {
+          type: nm ? 'near_miss' : 'hazard',
           photo: reportPhotoDataURL,
           content,
           createdAt: Date.now()
@@ -3087,55 +3196,86 @@ const db = getFirestore(fbApp);
       ]);
       resetReportForm();
       reportFormError.style.color = 'var(--accent)';
-      reportFormError.textContent = t('report_submit_success');
+      reportFormError.textContent = t(nm ? 'near_miss_submit_success' : 'report_submit_success');
       reportFormError.style.display = 'block';
     }catch(err){
       console.error('report submit failed', err);
       reportFormError.style.color = 'var(--high)';
-      reportFormError.textContent = t('report_submit_error');
+      reportFormError.textContent = t(nm ? 'near_miss_submit_error' : 'report_submit_error');
       reportFormError.style.display = 'block';
     }finally{
       reportSubmitBtn.disabled = false;
-      reportSubmitBtn.textContent = prevText;
+      reportSubmitBtn.textContent = t(reportType === 'near_miss' ? 'near_miss_submit_btn' : 'report_submit_btn');
     }
   });
 
+  function reportItemHTML(r, deletable){
+    const dt = r.createdAt ? new Date(r.createdAt).toLocaleString('ko-KR') : '';
+    return `<div class="report-item" data-id="${r.id}">
+        ${r.photo ? `<img src="${r.photo}" alt="" data-act="zoom-photo">` : ''}
+        <div class="body">
+          <div class="content">${escapeHTML(r.content||'')}</div>
+          <div class="meta">${escapeHTML(dt)}</div>
+        </div>
+        ${deletable ? `<button type="button" class="del-btn" data-act="delete-report" title="${t('title_delete')}">🗑️</button>` : ''}
+      </div>`;
+  }
+
+  // 아차사고 목록은 관리자 여부와 상관없이 모든 사용자에게 보여준다(삭제 버튼만 관리자).
+  function renderNearMissList(){
+    const list = $('near-miss-list');
+    if(!list) return;
+    const items = hazardReports.filter(isNearMiss);
+    const cnt = $('near-miss-count');
+    if(cnt) cnt.textContent = items.length ? `${items.length}${t('count_items')}` : '';
+    if(items.length === 0){
+      list.innerHTML = `<div class="status-empty">${t('near_miss_list_empty')}</div>`;
+      return;
+    }
+    list.innerHTML = items.map(r=> reportItemHTML(r, isAdmin)).join('');
+  }
+
   function renderReportList(){
+    renderNearMissList();
     const list = $('report-list');
     if(!list) return;
     if(!isAdmin){
       list.innerHTML = '';
       return;
     }
-    if(hazardReports.length === 0){
+    const hazards = hazardReports.filter(r=>!isNearMiss(r));
+    if(hazards.length === 0){
       list.innerHTML = `<div class="status-empty">${t('report_list_empty')}</div>`;
       return;
     }
-    list.innerHTML = hazardReports.map(r=>{
-      const dt = r.createdAt ? new Date(r.createdAt).toLocaleString('ko-KR') : '';
-      return `<div class="report-item" data-id="${r.id}">
-        ${r.photo ? `<img src="${r.photo}" alt="">` : ''}
-        <div class="body">
-          <div class="content">${escapeHTML(r.content||'')}</div>
-          <div class="meta">${escapeHTML(dt)}</div>
-        </div>
-        <button type="button" class="del-btn" data-act="delete-report" title="${t('title_delete')}">🗑️</button>
-      </div>`;
-    }).join('');
+    list.innerHTML = hazards.map(r=> reportItemHTML(r, true)).join('');
   }
 
-  $('report-list').addEventListener('click', (e)=>{
+  function handleReportListClick(e){
+    const zoom = e.target.closest('[data-act="zoom-photo"]');
+    if(zoom){
+      $('photo-lightbox-img').src = zoom.src;
+      $('photo-lightbox').classList.add('show');
+      return;
+    }
     const btn = e.target.closest('[data-act="delete-report"]');
     if(!btn) return;
     const item = e.target.closest('.report-item');
     const id = item && item.dataset.id;
     if(!id) return;
+    const target = hazardReports.find(r=>r.id===id);
     requireAdmin(async ()=>{
-      if(!confirm(t('report_delete_confirm'))) return;
+      if(!confirm(t(isNearMiss(target) ? 'near_miss_delete_confirm' : 'report_delete_confirm'))) return;
       try{
         await deleteDoc(doc(db,'hazard_reports',id));
       }catch(err){ console.error('report delete failed', err); }
     });
+  }
+  $('report-list').addEventListener('click', handleReportListClick);
+  $('near-miss-list').addEventListener('click', handleReportListClick);
+  $('photo-lightbox').addEventListener('click', ()=>{
+    $('photo-lightbox').classList.remove('show');
+    $('photo-lightbox-img').src = '';
   });
 
   // 작업등록 화면의 감시단/안전담당자 체크리스트: 안전관리자·안전감시단 / 관리감독자 /
