@@ -3356,9 +3356,12 @@ const db = getFirestore(fbApp);
   // 지도 핀/범례/통계/장비현황/주요작업목록이 모두 이 조건을 함께 사용한다
   // (markers 자체는 그대로 두고, 화면에 그릴 때만 visibleMarkers()로 걸러서 씀).
   let dashSearchQuery = '';
-  const dashFilterRisks = new Set();
-  const dashFilterStatuses = new Set();
-  const dashFilterCompanies = new Set();
+  // 필터는 "기본 = 전부 선택(전체 표시)" 상태에서 사용자가 보기 싫은 항목을
+  // 해제해 추려내는 방식이다. 그래서 선택된 값이 아니라 "해제된 값"을 저장한다
+  // (업체는 날짜마다 새로 생기므로, 새 업체는 자동으로 선택된 상태로 보이게 됨).
+  const dashExcludedRisks = new Set();
+  const dashExcludedStatuses = new Set();
+  const dashExcludedCompanies = new Set();
   let dashFilterVulnerableOnly = false;
 
   function markerMatchesDashFilter(m){
@@ -3368,12 +3371,10 @@ const db = getFirestore(fbApp);
       const hay = [m.company, m.workType, zone ? zone.name : ''].filter(Boolean).join(' ').toLowerCase();
       if(!hay.includes(q)) return false;
     }
-    if(dashFilterRisks.size && !dashFilterRisks.has(m.risk)) return false;
-    if(dashFilterStatuses.size){
-      const st = m.status === 'done' ? 'done' : 'in_progress';
-      if(!dashFilterStatuses.has(st)) return false;
-    }
-    if(dashFilterCompanies.size && !dashFilterCompanies.has(m.company)) return false;
+    if(dashExcludedRisks.has(m.risk)) return false;
+    const st = m.status === 'done' ? 'done' : 'in_progress';
+    if(dashExcludedStatuses.has(st)) return false;
+    if(m.company && dashExcludedCompanies.has(m.company)) return false;
     if(dashFilterVulnerableOnly && !(Number(m.vulnerable) > 0)) return false;
     return true;
   }
@@ -3390,7 +3391,10 @@ const db = getFirestore(fbApp);
   function updateDashFilterBadge(){
     const badge = $('dash-filter-badge');
     if(!badge) return;
-    const n = dashFilterRisks.size + dashFilterStatuses.size + dashFilterCompanies.size + (dashFilterVulnerableOnly ? 1 : 0);
+    // 배지 = 기본(전체)에서 바뀐 조건 수
+    const presentCompanies = new Set(markers.map(m=>m.company).filter(Boolean));
+    const excludedCompanyCount = [...dashExcludedCompanies].filter(c=>presentCompanies.has(c)).length;
+    const n = dashExcludedRisks.size + dashExcludedStatuses.size + excludedCompanyCount + (dashFilterVulnerableOnly ? 1 : 0);
     if(n > 0){ badge.style.display = 'inline-flex'; badge.textContent = n; }
     else { badge.style.display = 'none'; }
   }
@@ -3424,20 +3428,23 @@ const db = getFirestore(fbApp);
     companies.forEach(name=>{
       const label = document.createElement('label');
       label.className = 'staff-chip';
-      const checked = dashFilterCompanies.has(name);
+      const checked = !dashExcludedCompanies.has(name);
       if(checked) label.classList.add('checked');
       label.innerHTML = `<input type="checkbox" value="${escapeHTML(name)}" ${checked?'checked':''}> <i style="width:8px;height:8px;border-radius:50%;background:${companyColor(name)};display:inline-block;margin-right:2px;"></i>${escapeHTML(name)}`;
       label.querySelector('input').addEventListener('change', (e)=>{
         label.classList.toggle('checked', e.target.checked);
-        if(e.target.checked) dashFilterCompanies.add(name); else dashFilterCompanies.delete(name);
+        if(e.target.checked) dashExcludedCompanies.delete(name); else dashExcludedCompanies.add(name);
       });
       wrap.appendChild(label);
     });
   }
+  function syncDashFilterChips(){
+    document.querySelectorAll('#dash-filter-risk-chips .chip').forEach(btn=> btn.classList.toggle('active', !dashExcludedRisks.has(btn.dataset.risk)));
+    document.querySelectorAll('#dash-filter-status-chips .chip').forEach(btn=> btn.classList.toggle('active', !dashExcludedStatuses.has(btn.dataset.status)));
+  }
   function openDashFilterModal(){
     renderDashFilterCompanyList();
-    document.querySelectorAll('#dash-filter-risk-chips .chip').forEach(btn=> btn.classList.toggle('active', dashFilterRisks.has(btn.dataset.risk)));
-    document.querySelectorAll('#dash-filter-status-chips .chip').forEach(btn=> btn.classList.toggle('active', dashFilterStatuses.has(btn.dataset.status)));
+    syncDashFilterChips();
     $('dash-filter-vulnerable').checked = dashFilterVulnerableOnly;
     dashFilterBackdrop.classList.add('show');
   }
@@ -3448,15 +3455,15 @@ const db = getFirestore(fbApp);
   document.querySelectorAll('#dash-filter-risk-chips .chip').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const r = btn.dataset.risk;
-      if(dashFilterRisks.has(r)) dashFilterRisks.delete(r); else dashFilterRisks.add(r);
-      btn.classList.toggle('active');
+      if(dashExcludedRisks.has(r)) dashExcludedRisks.delete(r); else dashExcludedRisks.add(r);
+      syncDashFilterChips();
     });
   });
   document.querySelectorAll('#dash-filter-status-chips .chip').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const s = btn.dataset.status;
-      if(dashFilterStatuses.has(s)) dashFilterStatuses.delete(s); else dashFilterStatuses.add(s);
-      btn.classList.toggle('active');
+      if(dashExcludedStatuses.has(s)) dashExcludedStatuses.delete(s); else dashExcludedStatuses.add(s);
+      syncDashFilterChips();
     });
   });
   $('dash-filter-apply').addEventListener('click', ()=>{
@@ -3465,11 +3472,12 @@ const db = getFirestore(fbApp);
     refreshDashboardViews();
   });
   $('dash-filter-reset').addEventListener('click', ()=>{
-    dashFilterRisks.clear();
-    dashFilterStatuses.clear();
-    dashFilterCompanies.clear();
+    // 초기화 = 전부 선택(전체 표시) 상태로 되돌리기
+    dashExcludedRisks.clear();
+    dashExcludedStatuses.clear();
+    dashExcludedCompanies.clear();
     dashFilterVulnerableOnly = false;
-    document.querySelectorAll('#dash-filter-risk-chips .chip, #dash-filter-status-chips .chip').forEach(b=>b.classList.remove('active'));
+    syncDashFilterChips();
     $('dash-filter-vulnerable').checked = false;
     renderDashFilterCompanyList();
     refreshDashboardViews();
