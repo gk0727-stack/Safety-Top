@@ -430,6 +430,88 @@
     overflow-y:auto; background:var(--panel); z-index:6;
   }
   .page-inner{ max-width:520px; margin:0 auto; padding:22px 20px 40px; }
+  /* 작업현황은 표 형태라 화면을 넓게 쓴다 */
+  #page-status .page-inner{ max-width:1320px; }
+
+  /* ---------- 작업현황 표 ---------- */
+  .st-headline{ display:flex; align-items:baseline; justify-content:space-between; margin:6px 0 10px; }
+  .st-headline h3{ font-size:17px; font-weight:800; }
+  .st-count{ font-size:13px; color:var(--text-dim); font-weight:600; }
+  .st-chip-row{ margin-bottom:10px; }
+  .st-table{
+    --st-cols: 108px 150px minmax(180px,2.2fr) minmax(100px,1fr) 52px 118px minmax(110px,1.1fr) 72px 44px;
+    border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--panel);
+  }
+  .st-table.bulk{ --st-cols: 34px 108px 150px minmax(180px,2.2fr) minmax(100px,1fr) 52px 118px minmax(110px,1.1fr) 72px; }
+  .st-head, .st-row{ display:grid; grid-template-columns:var(--st-cols); align-items:start; column-gap:12px; padding:0 14px 0 10px; }
+  .st-head{ background:var(--panel-2); font-size:12.5px; font-weight:700; color:var(--text-muted); padding-top:10px; padding-bottom:10px; border-bottom:1px solid var(--border); }
+  .st-head .num, .st-row .st-people{ text-align:right; }
+  .st-row{
+    padding-top:13px; padding-bottom:13px; border-bottom:1px solid var(--border);
+    border-left:4px solid transparent; cursor:pointer; font-size:14px; color:var(--text);
+  }
+  .st-row:last-child{ border-bottom:none; }
+  .st-row:hover{ filter:brightness(0.985); }
+  .st-row.risk-high{ border-left-color:var(--high); background:#FEF6F6; }
+  .st-row.risk-mid{ border-left-color:var(--mid); background:#FFFBF0; }
+  .st-row.risk-low{ border-left-color:var(--low); }
+  .st-row.is-done{ opacity:0.78; }
+  .st-row.bulk-selected{ outline:2px solid var(--accent); outline-offset:-2px; background:var(--accent-bg); }
+  .st-risk-badge{ display:inline-flex; align-items:center; gap:3px; font-size:12px; font-weight:700; padding:2px 8px; border-radius:6px; white-space:nowrap; }
+  .st-risk-badge.high{ background:var(--high-bg); color:var(--high); }
+  .st-risk-badge.mid{ background:var(--mid-bg); color:var(--mid); }
+  .st-risk-badge.low{ background:var(--low-bg); color:var(--low); }
+  .st-company{ display:flex; align-items:center; gap:7px; font-weight:700; min-width:0; }
+  .st-company .dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .st-company .name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .st-title .t{ font-weight:700; word-break:keep-all; }
+  .st-sub{ font-size:12px; color:var(--text-dim); margin-top:3px; font-weight:500; }
+  .st-loc{ font-weight:600; }
+  .st-people{ font-weight:700; }
+  .st-time{ font-weight:600; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .st-sup{ font-weight:600; word-break:keep-all; }
+  .st-sup.empty{ color:var(--text-dim); font-weight:500; }
+  .st-status-pill{ display:inline-block; font-size:12px; font-weight:700; padding:2px 9px; border-radius:6px; white-space:nowrap; }
+  .st-status-pill.inprogress{ background:var(--accent-bg); color:var(--accent); }
+  .st-status-pill.done{ background:var(--panel-2); color:var(--text-muted); border:1px solid var(--border); }
+  .st-copy-btn{ background:none; border:1px solid var(--border); border-radius:7px; width:32px; height:28px; font-size:14px; cursor:pointer; }
+  .st-copy-btn:hover{ background:var(--accent-bg); border-color:var(--accent); }
+  .st-row .bulk-checkbox{ width:18px; height:18px; margin-top:2px; }
+  .st-mlabel{ display:none; }
+
+  /* 휴대폰: 표 대신 한 작업씩 카드처럼 쌓아서 보여준다 */
+  @media (max-width:820px){
+    .st-head{ display:none; }
+    .st-table, .st-table.bulk{ border:none; background:none; border-radius:0; overflow:visible; }
+    .st-row{
+      grid-template-columns:auto 1fr auto;
+      grid-template-areas:
+        "check risk status"
+        "check title title"
+        "check company company"
+        "check info info"
+        "check sup copy";
+      row-gap:5px; column-gap:10px;
+      border:1px solid var(--border); border-left-width:4px; border-radius:12px;
+      margin-bottom:10px; padding:12px 12px 12px 12px; background:var(--panel);
+    }
+    .st-row:last-child{ border-bottom:1px solid var(--border); }
+    .st-row .st-check{ grid-area:check; }
+    .st-row .st-riskc{ grid-area:risk; }
+    .st-row .st-statusc{ grid-area:status; }
+    .st-row .st-title{ grid-area:title; font-size:15.5px; }
+    .st-row .st-company{ grid-area:company; font-size:13.5px; }
+    .st-row .st-info{ grid-area:info; display:flex; flex-wrap:wrap; gap:4px 12px; font-size:13px; color:var(--text-muted); }
+    .st-row .st-info > div{ font-weight:600; }
+    .st-row .st-sup{ grid-area:sup; font-size:13px; align-self:center; }
+    .st-row .st-actions{ grid-area:copy; }
+    .st-mlabel{ display:inline; }
+  }
+  @media (min-width:821px){
+    /* 넓은 화면에서는 위치/인원/시간을 각각의 칸으로 풀어 쓴다 */
+    .st-row .st-info{ display:contents; }
+  }
+
   .page-header{ display:flex; align-items:center; gap:14px; margin-bottom:22px; }
   .page-back{
     background:none; border:none; color:var(--accent); font-size:16px; font-weight:700;
@@ -838,11 +920,20 @@
       </div>
       <div class="hint-text" id="export-status-text" style="display:none;"></div>
 
+      <div class="st-headline">
+        <h3 data-i18n="status_title">작업현황</h3>
+        <span class="st-count" id="status-count"></span>
+      </div>
       <div class="field">
-        <input type="text" id="status-search" placeholder="작업명 · 업체명 · 위치 · 담당자 검색" data-i18n-placeholder="status_search_ph">
+        <input type="text" id="status-search" autocomplete="off" placeholder="작업명 · 업체명 · 위치 · 담당자 검색" data-i18n-placeholder="status_search_ph">
+      </div>
+      <div class="chip-row st-chip-row" id="status-state-chips">
+        <button class="chip active" data-state="all" type="button" data-i18n="risk_all">전체</button>
+        <button class="chip" data-state="in_progress" type="button" data-i18n="status_inprogress">진행중</button>
+        <button class="chip" data-state="done" type="button" data-i18n="status_done">완료</button>
       </div>
       <div class="chip-row" id="status-risk-chips">
-        <button class="chip active" data-risk="all" type="button" data-i18n="risk_all">전체</button>
+        <button class="chip active" data-risk="all" type="button" data-i18n="risk_all_grade">위험등급 전체</button>
         <button class="chip" data-risk="high" type="button" data-i18n="risk_high">고위험</button>
         <button class="chip" data-risk="mid" type="button" data-i18n="risk_mid">중위험</button>
         <button class="chip" data-risk="low" type="button" data-i18n="risk_low">저위험</button>
@@ -913,6 +1004,12 @@
       <div class="field">
         <label id="report-content-label">신고 내용</label>
         <textarea id="report-content" placeholder="예: 3층 비계 발판 일부 파손"></textarea>
+      </div>
+
+      <!-- 안전개선 신고·아차사고 공통: 기본은 익명, 원하면 신고자를 자유롭게 적을 수 있음 -->
+      <div class="field" id="report-reporter-field">
+        <label data-i18n="report_reporter_label">신고자 (선택)</label>
+        <input type="text" id="report-reporter" maxlength="40" autocomplete="off" data-i18n-placeholder="report_reporter_ph" placeholder="비워두면 익명으로 접수됩니다">
       </div>
 
       <div class="hint-text" id="report-form-error" style="display:none; font-weight:700;"></div>
@@ -1298,6 +1395,18 @@ const db = getFirestore(fbApp);
       export_monthly: "월간",
       status_search_ph: "작업명 · 업체명 · 위치 · 담당자 검색",
       risk_all: "전체",
+      risk_all_grade: "위험등급 전체",
+      st_col_risk: "위험등급",
+      st_col_company: "협력업체",
+      st_col_title: "작업명",
+      st_col_loc: "위치",
+      st_col_people: "인원",
+      st_col_time: "작업시간",
+      st_col_sup: "감시단·담당자",
+      st_col_status: "상태",
+      st_unassigned: "미배치",
+      st_vulnerable: "취약",
+      st_copy_title: "이 작업 복사해서 새로 등록",
       bulk_complete_toggle: "☑️  일괄 작업 완료",
       bulk_delete_toggle: "🗑️  일괄 삭제",
       staff_page_title: "담당자 관리",
@@ -1379,6 +1488,9 @@ const db = getFirestore(fbApp);
       report_list_title: "📋 접수된 신고 내역 (관리자 전용)",
       report_list_empty: "아직 접수된 신고가 없습니다.",
       report_delete_confirm: "이 신고 내역을 삭제할까요?",
+      report_reporter_label: "신고자 (선택)",
+      report_reporter_ph: "비워두면 익명으로 접수됩니다",
+      report_reporter_anon: "익명",
       report_page_title: "안전신고",
       report_type_hazard: "🛠️ 안전개선 신고",
       report_type_near_miss: "⚠️ 아차사고 등록",
@@ -1547,6 +1659,18 @@ const db = getFirestore(fbApp);
       export_monthly: "月",
       status_search_ph: "搜索作业名·公司·位置·负责人",
       risk_all: "全部",
+      risk_all_grade: "全部风险等级",
+      st_col_risk: "风险等级",
+      st_col_company: "协作公司",
+      st_col_title: "作业名称",
+      st_col_loc: "位置",
+      st_col_people: "人数",
+      st_col_time: "作业时间",
+      st_col_sup: "监视·负责人",
+      st_col_status: "状态",
+      st_unassigned: "未安排",
+      st_vulnerable: "弱势",
+      st_copy_title: "复制此作业并新登记",
       bulk_complete_toggle: "☑️  批量完成作业",
       bulk_delete_toggle: "🗑️  批量删除",
       staff_page_title: "负责人管理",
@@ -1628,6 +1752,9 @@ const db = getFirestore(fbApp);
       report_list_title: "📋 举报记录(仅管理员)",
       report_list_empty: "暂无举报记录。",
       report_delete_confirm: "确定要删除这条举报记录吗?",
+      report_reporter_label: "举报人（选填）",
+      report_reporter_ph: "留空则匿名提交",
+      report_reporter_anon: "匿名",
       report_page_title: "安全举报",
       report_type_hazard: "🛠️ 安全改善举报",
       report_type_near_miss: "⚠️ 登记未遂事故",
@@ -1796,6 +1923,18 @@ const db = getFirestore(fbApp);
       export_monthly: "Monthly",
       status_search_ph: "Search work · company · location · supervisor",
       risk_all: "All",
+      risk_all_grade: "All risk levels",
+      st_col_risk: "Risk",
+      st_col_company: "Contractor",
+      st_col_title: "Work",
+      st_col_loc: "Location",
+      st_col_people: "Crew",
+      st_col_time: "Time",
+      st_col_sup: "Safety watch / Supervisor",
+      st_col_status: "Status",
+      st_unassigned: "Not assigned",
+      st_vulnerable: "Vulnerable",
+      st_copy_title: "Copy this work as a new entry",
       bulk_complete_toggle: "☑️  Bulk complete",
       bulk_delete_toggle: "🗑️  Bulk delete",
       staff_page_title: "Staff management",
@@ -1877,6 +2016,9 @@ const db = getFirestore(fbApp);
       report_list_title: "📋 Submitted reports (admin only)",
       report_list_empty: "No reports submitted yet.",
       report_delete_confirm: "Delete this report?",
+      report_reporter_label: "Reporter (optional)",
+      report_reporter_ph: "Leave blank to stay anonymous",
+      report_reporter_anon: "Anonymous",
       report_page_title: "Safety Report",
       report_type_hazard: "🛠️ Hazard report",
       report_type_near_miss: "⚠️ Near miss",
@@ -3120,6 +3262,7 @@ const db = getFirestore(fbApp);
     reportPhotoPreview.style.display = 'none';
     reportPhotoImg.src = '';
     reportContentInput.value = '';
+    $('report-reporter').value = '';
     reportFormError.style.display = 'none';
   }
 
@@ -3190,6 +3333,8 @@ const db = getFirestore(fbApp);
           type: nm ? 'near_miss' : 'hazard',
           photo: reportPhotoDataURL,
           content,
+          // 신고자(선택). 비워두면 빈 값 = 익명
+          reporter: $('report-reporter').value.trim().slice(0, 40),
           createdAt: Date.now()
         }),
         new Promise((_, reject)=> setTimeout(()=> reject(new Error('TIMEOUT')), 15000))
@@ -3215,7 +3360,7 @@ const db = getFirestore(fbApp);
         ${r.photo ? `<img src="${r.photo}" alt="" data-act="zoom-photo">` : ''}
         <div class="body">
           <div class="content">${escapeHTML(r.content||'')}</div>
-          <div class="meta">${escapeHTML(dt)}</div>
+          <div class="meta">👤 ${escapeHTML(r.reporter ? r.reporter : t('report_reporter_anon'))} · ${escapeHTML(dt)}</div>
         </div>
         ${deletable ? `<button type="button" class="del-btn" data-act="delete-report" title="${t('title_delete')}">🗑️</button>` : ''}
       </div>`;
@@ -4263,6 +4408,7 @@ const db = getFirestore(fbApp);
   // ---------------- status page (browse today's works, grouped by company) ----------------
   let statusSearch = '';
   let statusRiskFilter = 'all';
+  let statusStateFilter = 'all'; // 'all' | 'in_progress' | 'done'
 
   function openStatusPage(){
     closeAllPages();
@@ -4276,6 +4422,13 @@ const db = getFirestore(fbApp);
   }
   $('status-back-btn').addEventListener('click', ()=>{ bulkSelectMode = false; bulkSelectedIds.clear(); closeAllPages(); setActiveTab('dashboard'); });
   $('status-search').addEventListener('input', (e)=>{ statusSearch = e.target.value.trim().toLowerCase(); renderStatusList(); });
+  document.querySelectorAll('#status-state-chips .chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      statusStateFilter = chip.dataset.state;
+      document.querySelectorAll('#status-state-chips .chip').forEach(c=>c.classList.toggle('active', c===chip));
+      renderStatusList();
+    });
+  });
   document.querySelectorAll('#status-risk-chips .chip').forEach(chip=>{
     chip.addEventListener('click', ()=>{
       statusRiskFilter = chip.dataset.risk;
@@ -4284,6 +4437,8 @@ const db = getFirestore(fbApp);
     });
   });
 
+  // 작업현황: 위험등급 · 협력업체 · 작업명 · 위치 · 인원 · 작업시간 · 감시단 · 상태를
+  // 한 줄씩 보여주는 표. 넓은 화면은 표, 휴대폰은 한 작업씩 카드처럼 쌓아서 보여준다.
   function renderStatusList(){
     const list = $('status-list');
     list.innerHTML = '';
@@ -4294,6 +4449,8 @@ const db = getFirestore(fbApp);
 
     const matches = (m)=>{
       if(statusRiskFilter !== 'all' && m.risk !== statusRiskFilter) return false;
+      const st = m.status === 'done' ? 'done' : 'in_progress';
+      if(statusStateFilter !== 'all' && st !== statusStateFilter) return false;
       if(!statusSearch) return true;
       const zone = zones.find(z=>z.id===m.zoneId);
       const hay = [m.workType, m.company, m.supervisor, zone ? zone.name : ''].join(' ').toLowerCase();
@@ -4301,81 +4458,81 @@ const db = getFirestore(fbApp);
     };
 
     const filtered = markers.filter(matches);
+    const countEl = $('status-count');
+    if(countEl) countEl.textContent = `${filtered.length}${t('unit_cases')}`;
     if(filtered.length === 0){
       list.innerHTML = `<div class="status-empty">${t('status_empty')}</div>`;
       return;
     }
 
-    // group by company (works without a company go under "업체 미지정")
-    const groups = new Map();
-    filtered.forEach(m=>{
-      const key = m.company || t('company_unassigned');
-      if(!groups.has(key)) groups.set(key, []);
-      groups.get(key).push(m);
-    });
+    // 위험도 → 협력업체 → 시작시간 순 (같은 업체 작업이 붙어서 보이도록)
+    filtered.sort((a,b)=> riskRank(a.risk)-riskRank(b.risk)
+      || (a.company||' ').localeCompare(b.company||' ')
+      || (a.time||'').localeCompare(b.time||''));
 
-    groups.forEach((works, companyName)=>{
-      works.sort((a,b)=> riskRank(a.risk)-riskRank(b.risk) || (a.time||'').localeCompare(b.time||''));
-      const groupEl = document.createElement('div');
-      groupEl.className = 'status-group';
-      const dotColor = companyName === t('company_unassigned') ? '#9CA3AF' : companyColor(companyName);
-      groupEl.innerHTML = `<div class="status-group-head"><i class="dot" style="width:11px;height:11px;border-radius:50%;background:${dotColor};display:inline-block;"></i>${escapeHTML(companyName)}<span class="cnt">${works.length}${t('unit_cases')}</span></div>`;
-      const cardsWrap = document.createElement('div');
-      works.forEach(m=>{
-        const zone = zones.find(z=>z.id===m.zoneId);
-        const card = document.createElement('div');
-        card.className = 'work-card card-v2';
-        card.dataset.risk = m.risk;
-        const isChecked = bulkSelectMode && bulkSelectedIds.has(m.id);
-        card.innerHTML = `
-          <div class="v2-top">
-            ${bulkSelectMode ? `<input type="checkbox" class="bulk-checkbox" ${isChecked?'checked':''}>` : ''}
-            <h4 class="v2-title">${escapeHTML(m.workType||t('worktype_empty'))}</h4>
-            <span class="badge ${m.status==='done'?'done':'inprogress'}">${statusLabelKo(m.status)}</span>
-          </div>
-          <div class="v2-risk-row"><span class="badge ${m.risk}">${riskLabel(m.risk)}</span></div>
-          <div class="v2-meta">
-            ${zone ? `<div class="v2-meta-row">🏢 ${escapeHTML(zone.name)}</div>` : ''}
-            <div class="v2-meta-row">👤 ${m.people}${t('unit_people')}</div>
-            ${m.time ? `<div class="v2-meta-row">🕐 ${escapeHTML(m.time)}</div>` : ''}
-          </div>
-          ${m.supervisor ? `<div class="v2-supervisor">🦺 ${t('supervisor_label')}: ${escapeHTML(m.supervisor)}</div>` : ''}
-          ${!bulkSelectMode ? `<button type="button" class="btn copy-work-btn">📋&nbsp; ${t('copy_work_btn')}</button>` : ''}`;
-        if(!bulkSelectMode){
-          const copyBtn = card.querySelector('.copy-work-btn');
-          if(copyBtn){
-            copyBtn.addEventListener('click', (ev)=>{
-              ev.stopPropagation();
-              openWorkModal(null, null, m.id);
-            });
-          }
-        }
-        if(bulkSelectMode){
-          card.classList.add('bulk-mode');
-          if(bulkSelectedIds.has(m.id)) card.classList.add('bulk-selected');
-          const toggleSelect = ()=>{
-            if(bulkSelectedIds.has(m.id)){ bulkSelectedIds.delete(m.id); card.classList.remove('bulk-selected'); }
-            else { bulkSelectedIds.add(m.id); card.classList.add('bulk-selected'); }
-            const cb = card.querySelector('.bulk-checkbox');
-            if(cb) cb.checked = bulkSelectedIds.has(m.id);
-            updateBulkBar();
-          };
-          card.addEventListener('click', (ev)=>{
-            if(ev.target.classList.contains('bulk-checkbox')) return; // checkbox has its own handler
-            toggleSelect();
-          });
-          const checkboxEl = card.querySelector('.bulk-checkbox');
-          if(checkboxEl){
-            checkboxEl.addEventListener('click', (ev)=>{ ev.stopPropagation(); toggleSelect(); });
-          }
-        } else {
-          card.addEventListener('click', ()=>openWorkModal(m.id));
-        }
-        cardsWrap.appendChild(card);
-      });
-      groupEl.appendChild(cardsWrap);
-      list.appendChild(groupEl);
+    const table = document.createElement('div');
+    table.className = 'st-table' + (bulkSelectMode ? ' bulk' : '');
+    table.innerHTML = `<div class="st-head">
+        ${bulkSelectMode ? '<div></div>' : ''}
+        <div>${t('st_col_risk')}</div><div>${t('st_col_company')}</div><div>${t('st_col_title')}</div>
+        <div>${t('st_col_loc')}</div><div class="num">${t('st_col_people')}</div><div>${t('st_col_time')}</div>
+        <div>${t('st_col_sup')}</div><div>${t('st_col_status')}</div>${bulkSelectMode ? '' : '<div></div>'}
+      </div>`;
+
+    filtered.forEach(m=>{
+      const zone = zones.find(z=>z.id===m.zoneId);
+      const risk = ['high','mid','low'].includes(m.risk) ? m.risk : 'low';
+      const done = m.status === 'done';
+      const company = m.company || '';
+      const dotColor = company ? companyColor(company) : '#D1D5DB';
+      const subParts = [];
+      const equipText = formatEquipmentText(m.equipment);
+      if(equipText) subParts.push('🚜 ' + equipText); // formatEquipmentText는 이미 escape됨
+      if(Number(m.vulnerable) > 0) subParts.push(`${escapeHTML(t('st_vulnerable'))} ${Number(m.vulnerable)}${escapeHTML(t('unit_people'))}`);
+      const riskIcon = risk === 'high' ? '⚠ ' : '';
+
+      const row = document.createElement('div');
+      row.className = `st-row risk-${risk}` + (done ? ' is-done' : '');
+      row.dataset.id = m.id;
+      if(bulkSelectMode && bulkSelectedIds.has(m.id)) row.classList.add('bulk-selected');
+      row.innerHTML = `
+        ${bulkSelectMode ? `<div class="st-c st-check"><input type="checkbox" class="bulk-checkbox" ${bulkSelectedIds.has(m.id)?'checked':''}></div>` : ''}
+        <div class="st-c st-riskc"><span class="st-risk-badge ${risk}">${riskIcon}${escapeHTML(riskLabel(risk))}</span></div>
+        <div class="st-c st-company"><i class="dot" style="background:${dotColor}"></i><span class="name">${escapeHTML(company || t('company_unassigned'))}</span></div>
+        <div class="st-c st-title"><div class="t">${escapeHTML(m.workType||t('worktype_empty'))}</div>${subParts.length ? `<div class="st-sub">${subParts.join(' · ')}</div>` : ''}</div>
+        <div class="st-info">
+          <div class="st-c st-loc"><span class="st-mlabel">📍 </span>${zone ? escapeHTML(zone.name) : '-'}</div>
+          <div class="st-c st-people"><span class="st-mlabel">👷 </span>${Number(m.people)||0}<span class="st-mlabel">${escapeHTML(t('unit_people'))}</span></div>
+          <div class="st-c st-time"><span class="st-mlabel">🕐 </span>${m.time ? escapeHTML(m.time) : '-'}</div>
+        </div>
+        <div class="st-c st-sup${m.supervisor ? '' : ' empty'}"><span class="st-mlabel">🦺 </span>${escapeHTML(m.supervisor || t('st_unassigned'))}</div>
+        <div class="st-c st-statusc"><span class="st-status-pill ${done?'done':'inprogress'}">${statusLabelKo(m.status)}</span></div>
+        ${bulkSelectMode ? '' : `<div class="st-c st-actions"><button type="button" class="st-copy-btn" title="${escapeHTML(t('st_copy_title'))}">📋</button></div>`}`;
+
+      if(bulkSelectMode){
+        const toggleSelect = ()=>{
+          if(bulkSelectedIds.has(m.id)){ bulkSelectedIds.delete(m.id); row.classList.remove('bulk-selected'); }
+          else { bulkSelectedIds.add(m.id); row.classList.add('bulk-selected'); }
+          const cb = row.querySelector('.bulk-checkbox');
+          if(cb) cb.checked = bulkSelectedIds.has(m.id);
+          updateBulkBar();
+        };
+        row.addEventListener('click', (ev)=>{
+          if(ev.target.classList.contains('bulk-checkbox')) return;
+          toggleSelect();
+        });
+        const cb = row.querySelector('.bulk-checkbox');
+        if(cb) cb.addEventListener('click', (ev)=>{ ev.stopPropagation(); toggleSelect(); });
+      } else {
+        row.querySelector('.st-copy-btn').addEventListener('click', (ev)=>{
+          ev.stopPropagation();
+          openWorkModal(null, null, m.id);
+        });
+        row.addEventListener('click', ()=>openWorkModal(m.id));
+      }
+      table.appendChild(row);
     });
+    list.appendChild(table);
   }
 
   // ---------------- excel export (일간/주간/월간) ----------------
