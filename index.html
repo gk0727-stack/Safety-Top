@@ -350,6 +350,9 @@
   .modal h3{ font-size:19px; font-weight:800; margin-bottom:18px; padding-right:24px; color:var(--text); }
   .field{ margin-bottom:15px; }
   .field label{ display:block; font-size:14px; color:var(--text-muted); margin-bottom:6px; font-weight:600; }
+  /* PIN칸: 비밀번호 칸(type=password)으로 두면 크롬 비밀번호 관리자가 현장명을 '아이디'로 저장했다가
+     다른 입력칸(검색창 등)에 자동으로 채워 넣는다. 일반 텍스트칸 + 점 표시로 바꿈 */
+  .pin-mask{ -webkit-text-security:disc; text-security:disc; }
   .field input[type=text], .field input[type=number], .field input[type=time], .field input[type=password], .field textarea, .field select{
     width:100%; background:var(--panel-2); border:1.5px solid var(--border); border-radius:8px;
     padding:12px 13px; color:var(--text); font-size:16px;
@@ -402,7 +405,9 @@
     position:absolute; width:16px; height:16px; border-radius:50%; border:2.5px solid #fff;
     transform:translate(-50%,-50%); box-shadow:0 1px 5px rgba(16,24,40,0.45);
   }
-  .req-mark{ color:var(--high); font-weight:700; }
+  .req-mark{ color:var(--high); font-weight:800; margin-left:2px; }
+  .field-invalid input, .field-invalid select, .field-invalid textarea{ border-color:var(--high) !important; background:var(--high-bg) !important; }
+  .field-invalid > label{ color:var(--high); }
 
   /* zone manage list */
   .zone-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:14px; max-height:240px; overflow-y:auto; }
@@ -834,13 +839,13 @@
       </div>
 
       <div class="field">
-        <label data-i18n="label_company">업체 / 팀명</label>
+        <label><span data-i18n="label_company">업체 / 팀명</span> <span class="req-mark">*</span></label>
         <input type="text" id="f-company" placeholder="예: OO건설" data-i18n-placeholder="company_ph" list="company-datalist" autocomplete="off"><datalist id="company-datalist"></datalist>
         <div class="hint-text" id="company-import-hint" style="display:none; margin-top:6px; cursor:pointer; color:var(--accent); font-weight:600;"></div>
       </div>
 
       <div class="field">
-        <label data-i18n="label_people">투입 인원</label>
+        <label><span data-i18n="label_people">투입 인원</span> <span class="req-mark">*</span></label>
         <input type="number" id="f-people" min="1" placeholder="0">
       </div>
 
@@ -857,6 +862,9 @@
           <select id="f-zone"></select>
           <button class="btn" id="new-zone-from-work" type="button" data-i18n="new_zone_btn">＋ 새 위치</button>
         </div>
+        <!-- 목록에 없는 위치는 "직접 입력"을 골라 글자로 적는다 (지도 핀은 표시되지 않음) -->
+        <input type="text" id="f-zone-text" maxlength="40" autocomplete="off" style="display:none; margin-top:8px;" data-i18n-placeholder="zone_manual_ph" placeholder="예: 101동 지하주차장 입구">
+        <div class="hint-text" id="zone-manual-hint" style="display:none;" data-i18n="zone_manual_hint">직접 입력한 위치는 지도에 핀이 표시되지 않고, 목록·작업현황에만 나옵니다.</div>
         <div class="hint-text" id="zone-hint" style="display:none;" data-i18n="zone_hint">등록된 위치가 없습니다. "새 위치"로 먼저 만들어주세요.</div>
       </div>
 
@@ -885,7 +893,7 @@
       </div>
 
       <div class="field">
-        <label data-i18n="label_status">작업 상태</label>
+        <label><span data-i18n="label_status">작업 상태</span> <span class="req-mark">*</span></label>
         <select id="f-status">
           <option value="in_progress" data-i18n="status_inprogress">진행중</option>
           <option value="done" data-i18n="status_done">완료</option>
@@ -893,18 +901,18 @@
       </div>
 
       <div class="field">
-        <label data-i18n="label_vulnerable">취약근로자</label>
+        <label><span data-i18n="label_vulnerable">취약근로자</span> <span class="req-mark">*</span></label>
         <input type="number" id="f-vulnerable" min="0" placeholder="0">
         <div class="hint-text" style="margin-top:5px;" data-i18n="vulnerable_hint">고령자, 기저질환자 등</div>
       </div>
 
       <div class="field-row">
-        <div class="field"><label data-i18n="label_time_start">시작 시간</label><input type="text" id="f-time-start" inputmode="numeric" placeholder="09:00" maxlength="5" autocomplete="off"></div>
-        <div class="field"><label data-i18n="label_time_end">종료 시간</label><input type="text" id="f-time-end" inputmode="numeric" placeholder="18:00" maxlength="5" autocomplete="off"></div>
+        <div class="field"><label><span data-i18n="label_time_start">시작 시간</span> <span class="req-mark">*</span></label><input type="text" id="f-time-start" inputmode="numeric" placeholder="예: 09:00" maxlength="5" autocomplete="off"></div>
+        <div class="field"><label><span data-i18n="label_time_end">종료 시간</span> <span class="req-mark">*</span></label><input type="text" id="f-time-end" inputmode="numeric" placeholder="예: 18:00" maxlength="5" autocomplete="off"></div>
       </div>
 
       <div class="field">
-        <label data-i18n="label_supervisor">감시단 / 안전담당자</label>
+        <label><span data-i18n="label_supervisor">감시단 / 안전담당자</span> <span class="req-mark">*</span></label>
         <div class="staff-role-tabs" id="staff-role-tabs">
           <button type="button" class="staff-role-tab active" data-role-group="safety" data-i18n="staff_tab_safety">안전관리자/안전감시단</button>
           <button type="button" class="staff-role-tab" data-role-group="supervisor" data-i18n="staff_tab_supervisor">관리감독자</button>
@@ -914,7 +922,7 @@
         <div class="staff-check-list" id="f-supervisor-checks" style="margin-top:8px;"></div>
         <div class="hint-text" id="staff-hint" style="display:none;" data-i18n="staff_hint">등록된 담당자가 없습니다. 관리 탭 → 담당자 관리에서 먼저 등록해주세요.</div>
       </div>
-      <div class="field"><label data-i18n="label_note">메모 (안전조치 등)</label><textarea id="f-note" placeholder="예: 안전대 체결 확인, 신호수 배치" data-i18n-placeholder="note_ph"></textarea></div>
+      <div class="field"><label><span data-i18n="label_note">메모 (안전조치 등)</span> <span class="req-mark">*</span></label><textarea id="f-note" placeholder="예: 안전대 체결 확인, 신호수 배치" data-i18n-placeholder="note_ph"></textarea></div>
 
       <div class="hint-text" id="work-form-error" style="display:none; color:var(--high); font-weight:700;"></div>
 
@@ -1022,7 +1030,7 @@
       <div class="hint-text" id="report-intro" style="margin-top:0; margin-bottom:16px;">현장의 위험한 상황을 사진과 함께 신고해주세요. 신고 내용은 관리자만 확인합니다.</div>
 
       <div class="field">
-        <label data-i18n="report_photo_label">사진</label>
+        <label><span data-i18n="report_photo_label">사진</span> <span class="req-mark">*</span></label>
         <button type="button" class="btn" id="report-photo-btn" data-i18n="report_photo_btn">📷 사진 촬영 / 첨부</button>
         <input type="file" id="report-photo-input" accept="image/*" style="display:none;">
         <div id="report-photo-preview" style="display:none; margin-top:10px; max-width:260px;">
@@ -1032,7 +1040,7 @@
       </div>
 
       <div class="field">
-        <label id="report-content-label">신고 내용</label>
+        <label><span id="report-content-label">신고 내용</span> <span class="req-mark">*</span></label>
         <textarea id="report-content" placeholder="예: 3층 비계 발판 일부 파손"></textarea>
       </div>
 
@@ -1213,7 +1221,7 @@
     <h3 data-i18n="admin_pin_title">관리자 PIN 입력</h3>
     <div class="field">
       <label data-i18n="admin_pin_label">PIN 코드</label>
-      <input type="password" id="admin-pin-input" placeholder="••••" inputmode="numeric">
+      <input type="text" id="admin-pin-input" class="pin-mask" placeholder="••••" inputmode="numeric" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true">
     </div>
     <div class="hint-text" id="admin-pin-error" style="display:none; color:var(--high);" data-i18n="admin_pin_error">PIN이 올바르지 않습니다.</div>
     <div class="modal-actions">
@@ -1227,9 +1235,9 @@
   <div class="modal" style="max-width:320px;">
     <button class="btn modal-close-x" id="staff-name-close">✕</button>
     <h3 data-i18n="staff_modal_title">담당자 등록</h3>
-    <div class="field"><label data-i18n="label_name">이름</label><input type="text" id="sn-name" placeholder="예: 김경호" data-i18n-placeholder="staff_name_ph"></div>
+    <div class="field"><label><span data-i18n="label_name">이름</span> <span class="req-mark">*</span></label><input type="text" id="sn-name" placeholder="예: 김경호" data-i18n-placeholder="staff_name_ph"></div>
     <div class="field">
-      <label data-i18n="label_role">역할</label>
+      <label><span data-i18n="label_role">역할</span> <span class="req-mark">*</span></label>
       <select id="sn-role">
         <option value="관리감독자" data-i18n="role_supervisor">관리감독자</option>
         <option value="안전관리자" data-i18n="role_safety_manager">안전관리자</option>
@@ -1370,6 +1378,16 @@ const db = getFirestore(fbApp);
       stat_low: "저위험 건수",
       back: "← 뒤로",
       work_add_title: "위험작업 등록",
+      zone_manual_option: "✏️ 직접 입력 (목록에 없는 위치)",
+      zone_manual_ph: "예: 101동 지하주차장 입구",
+      zone_manual_hint: "직접 입력한 위치는 지도에 핀이 표시되지 않고, 목록·작업현황에만 나옵니다.",
+      err_company_required: "⚠ 업체 / 팀명을 입력해주세요.",
+      err_people_required: "⚠ 투입 인원을 입력해주세요.",
+      err_zone_text_required: "⚠ 위치를 직접 입력해주세요.",
+      err_vulnerable_required: "⚠ 취약근로자 인원을 입력해주세요. (없으면 0)",
+      err_time_required: "⚠ 시작 시간과 종료 시간을 모두 입력해주세요. (예: 08:00)",
+      err_supervisor_required: "⚠ 감시단 / 안전담당자를 1명 이상 추가해주세요.",
+      err_note_required: "⚠ 메모(안전조치 등)를 입력해주세요.",
       save_slow: "⏳ 인터넷 연결이 느려 저장이 늦어지고 있습니다. 연결되면 자동으로 저장되며, 다시 눌러도 중복으로 등록되지 않습니다.",
       work_edit_title: "위험작업 수정",
       work_copy_title: "위험작업 등록 (복사됨)",
@@ -1658,6 +1676,16 @@ const db = getFirestore(fbApp);
       stat_low: "低风险件数",
       back: "← 返回",
       work_add_title: "登记危险作业",
+      zone_manual_option: "✏️ 直接输入（列表中没有的位置）",
+      zone_manual_ph: "例：101栋地下停车场入口",
+      zone_manual_hint: "直接输入的位置不会在地图上显示图钉，只显示在列表和作业现况中。",
+      err_company_required: "⚠ 请输入公司 / 团队名称。",
+      err_people_required: "⚠ 请输入投入人数。",
+      err_zone_text_required: "⚠ 请直接输入位置。",
+      err_vulnerable_required: "⚠ 请输入弱势劳动者人数。（没有请填0）",
+      err_time_required: "⚠ 请输入开始和结束时间。（例：08:00）",
+      err_supervisor_required: "⚠ 请至少添加1名监视组 / 安全负责人。",
+      err_note_required: "⚠ 请输入备注（安全措施等）。",
       save_slow: "⏳ 网络较慢，保存有所延迟。连接恢复后会自动保存，再次点击也不会重复登记。",
       work_edit_title: "修改危险作业",
       work_copy_title: "登记危险作业（已复制）",
@@ -1946,6 +1974,16 @@ const db = getFirestore(fbApp);
       stat_low: "Low-risk count",
       back: "← Back",
       work_add_title: "Register hazardous work",
+      zone_manual_option: "✏️ Type it in (not in the list)",
+      zone_manual_ph: "e.g. Building 101 basement parking entrance",
+      zone_manual_hint: "Typed-in locations have no pin on the map; they appear in the lists and work status only.",
+      err_company_required: "⚠ Please enter the company / team.",
+      err_people_required: "⚠ Please enter the crew size.",
+      err_zone_text_required: "⚠ Please type the location.",
+      err_vulnerable_required: "⚠ Please enter the number of vulnerable workers (0 if none).",
+      err_time_required: "⚠ Please enter both start and end time (e.g. 08:00).",
+      err_supervisor_required: "⚠ Please add at least one safety watch / supervisor.",
+      err_note_required: "⚠ Please enter notes (safety measures, etc.).",
       save_slow: "⏳ Your connection is slow, so saving is delayed. It will save automatically once connected; tapping again will not create a duplicate.",
       work_edit_title: "Edit hazardous work",
       work_copy_title: "Register hazardous work (copied)",
@@ -2716,7 +2754,13 @@ const db = getFirestore(fbApp);
   // 데이터베이스에서 받은 작업을 화면에 그리기 전에 형식을 정리한다.
   // 숫자칸은 숫자로, 위험도/상태는 정해진 값으로, 시간은 숫자·":"·"~"만 남긴다.
   // (보안 규칙이 열려 있어 누군가 이상한 값을 직접 넣어도 화면에서 스크립트가 실행되지 않게)
+  // 작업의 위치 이름: 등록된 위치(지도 핀)면 그 이름, 직접 입력한 위치면 그 글자
+  function workLocName(m){
+    const z = m && m.zoneId ? zones.find(z=>z.id===m.zoneId) : null;
+    return z ? z.name : ((m && m.locationText) || '');
+  }
   function sanitizeWork(m){
+    m.locationText = typeof m.locationText === 'string' ? m.locationText : '';
     m.people = Number(m.people) || 0;
     m.vulnerable = Number(m.vulnerable) || 0;
     if(!['high','mid','low'].includes(m.risk)) m.risk = 'high';
@@ -2814,7 +2858,11 @@ const db = getFirestore(fbApp);
     d.setDate(d.getDate() + deltaDays);
     setCurrentDate(toISO(d));
   }
-  datePicker.addEventListener('change', ()=> setCurrentDate(datePicker.value));
+  datePicker.addEventListener('change', ()=>{
+    // 사용자가 직접 고른 날짜만 반영(브라우저가 예전 값을 채워 넣은 경우는 무시)
+    if(typeof isUserEdit === 'function' && !isUserEdit(datePicker)){ datePicker.value = currentDate; return; }
+    setCurrentDate(datePicker.value);
+  });
   // 앱을 켜 둔 채로 날이 바뀐 뒤 다시 화면을 열면(다음날 아침 등), "오늘"을 보고 있던
   // 경우에만 새 날짜로 자동 전환한다. (지난 날짜를 일부러 보고 있던 경우는 그대로 둔다)
   let lastKnownToday = todayStr();
@@ -2842,7 +2890,10 @@ const db = getFirestore(fbApp);
 
   if(statusDatePicker){
     statusDatePicker.value = currentDate;
-    statusDatePicker.addEventListener('change', ()=> setCurrentDate(statusDatePicker.value));
+    statusDatePicker.addEventListener('change', ()=>{
+      if(typeof isUserEdit === 'function' && !isUserEdit(statusDatePicker)){ statusDatePicker.value = currentDate; return; }
+      setCurrentDate(statusDatePicker.value);
+    });
   }
   $('status-prev-day').addEventListener('click', ()=> shiftCurrentDate(-1));
   $('status-next-day').addEventListener('click', ()=> shiftCurrentDate(1));
@@ -3890,7 +3941,7 @@ const db = getFirestore(fbApp);
     const q = dashSearchQuery.trim().toLowerCase();
     if(q){
       const zone = zones.find(z=>z.id===m.zoneId);
-      const hay = [m.company, m.workType, zone ? zone.name : ''].filter(Boolean).join(' ').toLowerCase();
+      const hay = [m.company, m.workType, workLocName(m)].filter(Boolean).join(' ').toLowerCase();
       if(!hay.includes(q)) return false;
     }
     if(dashExcludedRisks.has(m.risk)) return false;
@@ -3939,7 +3990,29 @@ const db = getFirestore(fbApp);
     if(datePicker.value !== currentDate) datePicker.value = currentDate;
     refreshDashboardViews();
   });
+  // 브라우저(크롬 자동완성·비밀번호 관리자·탭 복원)가 사용자가 손대지 않았는데
+  // 검색칸/날짜칸에 값을 채워 넣는 경우가 있다(예: 검색칸에 현장명 "광주 운암산공원").
+  // 그러면 모든 작업이 걸러져 지도가 비어 보이므로, 사용자가 직접 누르거나 입력한
+  // 경우에만 값을 받아들이고 그 외에는 원래 값으로 되돌린다.
+  const userTouched = new WeakMap(); // element -> 마지막으로 사용자가 만진 시각
+  function markTouched(el){ if(!el) return; ['pointerdown','keydown','focus','touchstart'].forEach(ev=> el.addEventListener(ev, ()=> userTouched.set(el, Date.now()), true)); }
+  function isUserEdit(el){ return document.activeElement === el || (Date.now() - (userTouched.get(el) || 0)) < 120000; }
+  markTouched(dashSearchInput);
+  markTouched(datePicker);
+  if(typeof statusDatePicker !== 'undefined' && statusDatePicker) markTouched(statusDatePicker);
+  function sweepAutofill(){
+    if(dashSearchInput.value && !isUserEdit(dashSearchInput)){
+      resetDashSearchOnLoad();
+      refreshDashboardViews();
+    }
+    if(datePicker.value !== currentDate && !isUserEdit(datePicker)){
+      datePicker.value = currentDate;
+    }
+  }
+  // 자동완성은 페이지가 열린 뒤 조금 늦게 채워지기도 해서 몇 번 더 확인한다
+  [500, 1500, 3000, 6000].forEach(ms=> setTimeout(sweepAutofill, ms));
   dashSearchInput.addEventListener('input', ()=>{
+    if(!isUserEdit(dashSearchInput)){ sweepAutofill(); return; }
     dashSearchQuery = dashSearchInput.value;
     dashSearchClearBtn.style.display = dashSearchQuery ? 'block' : 'none';
     refreshDashboardViews();
@@ -4135,7 +4208,7 @@ const db = getFirestore(fbApp);
       }
       pin.style.setProperty('--pin-size', pinSizePx.toFixed(1) + 'px');
       const warnBadge = isDone ? `<div class="pin-warn pin-done-badge">✓</div>` : (m.risk === 'high' ? `<div class="pin-warn">⚠</div>` : '');
-      const labelText = [m.company, zone ? zone.name : ''].filter(Boolean).join(' · ');
+      const labelText = [m.company, workLocName(m)].filter(Boolean).join(' · ');
       pin.innerHTML = `<div class="pin-circle" style="background:${pinColor}">${m.people||0}</div>${warnBadge}<div class="pin-label">${escapeHTML(labelText || m.workType || t('work_fallback'))}</div>`;
       pin.addEventListener('click', (ev)=>{ ev.stopPropagation(); openWorkDetail(m.id); });
       mapCanvas.appendChild(pin);
@@ -4263,7 +4336,7 @@ const db = getFirestore(fbApp);
       ? `<span style="display:inline-flex; align-items:center; gap:5px;"><i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${companyColor(m.company)};"></i>${escapeHTML(m.company)}</span>`
       : '';
     $('wd-rows').innerHTML = [
-      wdRow(t('wd_location'), zone ? escapeHTML(zone.name) : ''),
+      wdRow(t('wd_location'), escapeHTML(workLocName(m))),
       wdRow(t('wd_company'), companyHtml),
       wdRow(t('wd_supervisor'), m.supervisor ? escapeHTML(m.supervisor) : ''),
       wdRow(t('wd_people'), (m.people || m.people === 0) ? `${m.people}${t('unit_people')}` : ''),
@@ -4359,7 +4432,7 @@ const db = getFirestore(fbApp);
         <div class="work-card-top"><span class="badges-group"><span class="badge ${m.risk}">${riskLabel(m.risk)}</span><span class="badge ${m.status==='done'?'done':'inprogress'}">${statusLabelKo(m.status)}</span></span><span class="time">${m.time||''}</span></div>
         <h4>${escapeHTML(m.workType||t('worktype_empty'))}</h4>
         <div class="meta">
-          ${zone ? `<span class="loc">📍 ${escapeHTML(zone.name)}</span>` : ''}
+          ${workLocName(m) ? `<span class="loc">📍 ${escapeHTML(workLocName(m))}</span>` : ''}
           <span>👷 ${m.people}${t('unit_people')}</span>
           ${m.company?`<span><i class="dot" style="background:${companyColor(m.company)};display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px;"></i>${escapeHTML(m.company)}</span>`:''}
           ${m.supervisor?`<span>🦺 ${escapeHTML(m.supervisor)}</span>`:''}
@@ -4388,7 +4461,7 @@ const db = getFirestore(fbApp);
         <div class="work-card-top"><span class="badges-group"><span class="badge ${m.risk}">${riskLabel(m.risk)}</span><span class="badge ${m.status==='done'?'done':'inprogress'}">${m.status==='done'?'완료':'진행중'}</span></span><span class="time">${m.time||''}</span></div>
         <h4>${escapeHTML(m.workType||'(작업명 미입력)')}</h4>
         <div class="meta">
-          ${zone ? `<span class="loc">📍 ${escapeHTML(zone.name)}</span>` : ''}
+          ${workLocName(m) ? `<span class="loc">📍 ${escapeHTML(workLocName(m))}</span>` : ''}
           <span>👷 ${m.people}명</span>
           ${m.company?`<span><i class="dot" style="background:${companyColor(m.company)};display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px;"></i>${escapeHTML(m.company)}</span>`:''}
           ${m.supervisor?`<span>🦺 ${escapeHTML(m.supervisor)}</span>`:''}
@@ -4437,13 +4510,29 @@ const db = getFirestore(fbApp);
   function showWorkPage(){ closeAllPages(); mainArea.style.display = 'none'; workPage.style.display = 'block'; }
   function hideWorkPage(){ closeAllPages(); }
 
-  function populateZoneSelect(selectedId){
+  const ZONE_MANUAL = '__manual__';
+  function updateZoneManualUI(){
+    const manual = $('f-zone').value === ZONE_MANUAL;
+    $('f-zone-text').style.display = manual ? 'block' : 'none';
+    $('zone-manual-hint').style.display = manual ? 'block' : 'none';
+  }
+  // selectedId: 선택할 위치 id / manualText: 직접 입력한 위치(있으면 "직접 입력"을 선택)
+  function populateZoneSelect(selectedId, manualText){
     const sel = $('f-zone');
     sel.innerHTML = '';
+    const manualOpt = ()=>{
+      const o = document.createElement('option');
+      o.value = ZONE_MANUAL; o.textContent = t('zone_manual_option');
+      if(manualText) o.selected = true;
+      return o;
+    };
+    $('f-zone-text').value = manualText || '';
     if(zones.length === 0){
       $('zone-hint').style.display = 'block';
       sel.innerHTML = `<option value="">${t('no_location_option')}</option>`;
-      sel.disabled = true;
+      sel.appendChild(manualOpt());
+      sel.disabled = false;
+      updateZoneManualUI();
       return;
     }
     $('zone-hint').style.display = 'none';
@@ -4456,10 +4545,22 @@ const db = getFirestore(fbApp);
     sortedZones().forEach(z=>{
       const opt = document.createElement('option');
       opt.value = z.id; opt.textContent = z.name;
-      if(z.id === selectedId) opt.selected = true;
+      if(z.id === selectedId && !manualText) opt.selected = true;
       sel.appendChild(opt);
     });
+    sel.appendChild(manualOpt());
+    updateZoneManualUI();
   }
+  document.getElementById('page-add-work').addEventListener('input', (e)=>{
+    const f = e.target.closest && e.target.closest('.field-invalid'); if(f) f.classList.remove('field-invalid');
+  });
+  document.getElementById('page-add-work').addEventListener('change', (e)=>{
+    const f = e.target.closest && e.target.closest('.field-invalid'); if(f) f.classList.remove('field-invalid');
+  });
+  $('f-zone').addEventListener('change', ()=>{
+    updateZoneManualUI();
+    if($('f-zone').value === ZONE_MANUAL) $('f-zone-text').focus();
+  });
 
   function openWorkModal(id, presetZoneId, duplicateFrom){
     // duplicateFrom: 다른 작업의 id. 지정하면 그 작업 내용을 그대로 불러오되
@@ -4474,10 +4575,10 @@ const db = getFirestore(fbApp);
     if(importBtnEl) importBtnEl.style.display = editingId ? 'none' : '';
     if(typeof hideCompanyImportHint === 'function') hideCompanyImportHint();
     refreshRecentSuggestions();
-    populateZoneSelect(m ? m.zoneId : presetZoneId);
+    populateZoneSelect(m ? m.zoneId : presetZoneId, (m && !(m.zoneId && zones.some(z=>z.id===m.zoneId))) ? (m.locationText || '') : '');
     $('f-worktype').value = m ? m.workType : '';
     $('f-people').value = m ? m.people : '';
-    $('f-vulnerable').value = (m && m.vulnerable) ? m.vulnerable : '';
+    $('f-vulnerable').value = m ? String(Number(m.vulnerable) || 0) : ''; // 기존 작업은 0명도 0으로 보여줌(필수칸)
     loadEquipmentIntoForm(m ? m.equipment : []);
     if(m && m.time && m.time.includes('~')){
       const [ts, te] = m.time.split('~').map(s=>s.trim());
@@ -4545,7 +4646,7 @@ const db = getFirestore(fbApp);
   function fillWorkFormFrom(m){
     $('f-worktype').value = m.workType || '';
     $('f-people').value = m.people || '';
-    $('f-vulnerable').value = m.vulnerable || '';
+    $('f-vulnerable').value = String(Number(m.vulnerable) || 0);
     loadEquipmentIntoForm(m.equipment);
     if(m.time && m.time.includes('~')){
       const [ts, te] = m.time.split('~').map(s=>s.trim());
@@ -4567,6 +4668,8 @@ const db = getFirestore(fbApp);
     // (위치가 삭제/변경됐으면 그냥 사용자가 직접 고르게 둔다).
     if(m.zoneId && zones.some(z=>z.id===m.zoneId)){
       populateZoneSelect(m.zoneId);
+    } else if(m.locationText){
+      populateZoneSelect(null, m.locationText);
     }
     pendingAreas = getMarkerAreas(m).map(a=>({ ...a }));
     updateAreaStatusText();
@@ -4694,7 +4797,7 @@ const db = getFirestore(fbApp);
       if(statusStateFilter !== 'all' && st !== statusStateFilter) return false;
       if(!statusSearch) return true;
       const zone = zones.find(z=>z.id===m.zoneId);
-      const hay = [m.workType, m.company, m.supervisor, zone ? zone.name : ''].join(' ').toLowerCase();
+      const hay = [m.workType, m.company, m.supervisor, workLocName(m)].join(' ').toLowerCase();
       return hay.includes(statusSearch);
     };
 
@@ -4742,7 +4845,7 @@ const db = getFirestore(fbApp);
         <div class="st-c st-company"><i class="dot" style="background:${dotColor}"></i><span class="name">${escapeHTML(company || t('company_unassigned'))}</span></div>
         <div class="st-c st-title"><div class="t">${escapeHTML(m.workType||t('worktype_empty'))}</div>${subParts.length ? `<div class="st-sub">${subParts.join(' · ')}</div>` : ''}</div>
         <div class="st-info">
-          <div class="st-c st-loc"><span class="st-mlabel">📍 </span>${zone ? escapeHTML(zone.name) : '-'}</div>
+          <div class="st-c st-loc"><span class="st-mlabel">📍 </span>${(workLocName(m) ? escapeHTML(workLocName(m)) : '-')}</div>
           <div class="st-c st-people"><span class="st-mlabel">👷 </span>${Number(m.people)||0}<span class="st-mlabel">${escapeHTML(t('unit_people'))}</span></div>
           <div class="st-c st-time"><span class="st-mlabel">🕐 </span>${m.time ? escapeHTML(m.time) : '-'}</div>
         </div>
@@ -4795,7 +4898,7 @@ const db = getFirestore(fbApp);
         const zone = zones.find(z=>z.id===m.zoneId);
         return {
           '날짜': m.date || '',
-          '위치': zone ? zone.name : '',
+          '위치': workLocName(m),
           '작업 내용': m.workType || '',
           '위험도': riskLabel(m.risk),
           '인원': m.people || 0,
@@ -4971,7 +5074,10 @@ const db = getFirestore(fbApp);
   }
 
   $('save-btn').addEventListener('click', async ()=>{
-    const zoneId = $('f-zone').value;
+    const zoneSel = $('f-zone').value;
+    const isManualZone = zoneSel === ZONE_MANUAL;
+    const zoneId = isManualZone ? '' : zoneSel;
+    const locationText = isManualZone ? $('f-zone-text').value.trim() : '';
     const workType = $('f-worktype').value.trim();
     const people = Number($('f-people').value) || 0;
     const vulnerable = Number($('f-vulnerable').value) || 0;
@@ -4986,17 +5092,31 @@ const db = getFirestore(fbApp);
     const equipment = collectEquipmentFromForm();
 
     const errEl = $('work-form-error');
-    if(!zoneId){
-      errEl.textContent = t('err_zone_required');
+    // 필수 항목(*) 확인 — 화면 위에서부터 순서대로, 처음 빠진 칸으로 이동해서 빨갛게 표시
+    document.querySelectorAll('#page-add-work .field-invalid').forEach(el=>el.classList.remove('field-invalid'));
+    const timeOk = (v)=> /^\d{1,2}:\d{2}$/.test(v);
+    const checks = [
+      [!company, 'err_company_required', 'f-company'],
+      [!$('f-people').value.trim() || people <= 0, 'err_people_required', 'f-people'],
+      [!workType, 'err_worktype_required', 'f-worktype'],
+      [!zoneSel || (zones.length === 0 && !isManualZone), 'err_zone_required', 'f-zone'],
+      [isManualZone && !locationText, 'err_zone_text_required', 'f-zone-text'],
+      [$('f-vulnerable').value.trim() === '', 'err_vulnerable_required', 'f-vulnerable'],
+      [!timeOk(timeStart) || !timeOk(timeEnd), 'err_time_required', !timeOk(timeStart) ? 'f-time-start' : 'f-time-end'],
+      [staffChecklistSelected.size === 0, 'err_supervisor_required', 'f-staff-select'],
+      [!note, 'err_note_required', 'f-note'],
+    ];
+    const miss = checks.find(c=>c[0]);
+    if(miss){
+      const target = $(miss[2]);
+      errEl.textContent = t(miss[1]);
       errEl.style.display = 'block';
-      errEl.scrollIntoView({behavior:'smooth', block:'center'});
-      return;
-    }
-    if(!workType){
-      errEl.textContent = t('err_worktype_required');
-      errEl.style.display = 'block';
-      $('f-worktype').focus();
-      $('f-worktype').scrollIntoView({behavior:'smooth', block:'center'});
+      const fieldEl = target && target.closest('.field');
+      if(fieldEl) fieldEl.classList.add('field-invalid');
+      if(target){
+        target.scrollIntoView({behavior:'smooth', block:'center'});
+        if(target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') setTimeout(()=>target.focus({preventScroll:true}), 300);
+      }
       return;
     }
     errEl.style.display = 'none';
@@ -5010,13 +5130,13 @@ const db = getFirestore(fbApp);
     const withTimeout = (pr)=> Promise.race([pr, new Promise((_, rej)=> setTimeout(()=> rej(new Error('TIMEOUT')), 15000))]);
     try{
       if(editingId){
-        await withTimeout(updateDoc(doc(db,'works',editingId), { zoneId, workType, people, vulnerable, time, company, supervisor, note, areas, area: null, status, risk: selectedRisk, equipment }));
+        await withTimeout(updateDoc(doc(db,'works',editingId), { zoneId, locationText, workType, people, vulnerable, time, company, supervisor, note, areas, area: null, status, risk: selectedRisk, equipment }));
       } else {
         // 인터넷이 느릴 때 "저장 실패"를 보고 다시 눌러도 같은 작업이 2개 생기지 않도록,
         // 새 작업의 문서 ID를 미리 정해 두고 그 ID로 저장한다(재시도하면 같은 문서를 덮어씀).
         if(!newWorkDocId) newWorkDocId = doc(collection(db,'works')).id;
         await withTimeout(setDoc(doc(db,'works',newWorkDocId), {
-          date: currentDate, zoneId, workType, people, vulnerable, time, company, supervisor, note, areas, area: null, status, risk: selectedRisk, equipment, createdAt: Date.now()
+          date: currentDate, zoneId, locationText, workType, people, vulnerable, time, company, supervisor, note, areas, area: null, status, risk: selectedRisk, equipment, createdAt: Date.now()
         }));
       }
       pushRecentValue('safetytop_recent_worktypes', workType);
