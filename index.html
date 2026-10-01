@@ -162,8 +162,8 @@
     transform:translateZ(0); -webkit-transform:translateZ(0);
     isolation:isolate; contain:paint;
   }
-  .stat-card .num{ font-size:16px; font-weight:800; letter-spacing:-0.3px; line-height:1.1; color:var(--text); }
-  .stat-card .label{ font-size:9.5px; color:var(--text-muted); font-weight:600; }
+  .stat-card .num{ font-size:19px; font-weight:800; letter-spacing:-0.3px; line-height:1.15; color:var(--text); }
+  .stat-card .label{ font-size:12px; color:var(--text-muted); font-weight:600; line-height:1.3; }
   .stat-card.high .num{ color:var(--high); }
   .stat-card.mid .num{ color:var(--mid); }
   .stat-card.low .num{ color:var(--low); }
@@ -269,6 +269,13 @@
 
   .place-cursor .map-canvas{ cursor:crosshair; }
   .area-drawing .map-canvas{ cursor:crosshair; }
+  /* 휴대폰에서 범위를 손가락으로 그릴 때 화면이 같이 스크롤되며 그리기가 끊기지 않도록 */
+  .area-drawing .map-canvas, .area-drawing .map-canvas img{ touch-action:none; }
+  /* 범위 그리기·위치 찍기 중에는 핀/점이 손가락(클릭)을 가로채지 않게 해서 핀 위에서도 그릴 수 있게 */
+  .area-drawing .pin, .area-drawing .zone-dot, .area-drawing .area-overlay,
+  .place-cursor .pin, .place-cursor .zone-dot, .place-cursor .area-overlay{ pointer-events:none; }
+  .site-name-input[readonly]{ cursor:default; }
+  .site-name-input[readonly]:hover, .site-name-input[readonly]:focus{ border-bottom-color:transparent; }
 
   .area-draw-rect{
     position:absolute; border:2.5px dashed var(--accent); background:rgba(37,99,235,0.18);
@@ -343,7 +350,7 @@
   .modal h3{ font-size:19px; font-weight:800; margin-bottom:18px; padding-right:24px; color:var(--text); }
   .field{ margin-bottom:15px; }
   .field label{ display:block; font-size:14px; color:var(--text-muted); margin-bottom:6px; font-weight:600; }
-  .field input[type=text], .field input[type=number], .field input[type=time], .field textarea, .field select{
+  .field input[type=text], .field input[type=number], .field input[type=time], .field input[type=password], .field textarea, .field select{
     width:100%; background:var(--panel-2); border:1.5px solid var(--border); border-radius:8px;
     padding:12px 13px; color:var(--text); font-size:16px;
   }
@@ -375,8 +382,9 @@
     font-size:13px; font-weight:600; color:var(--text);
   }
   .area-chip-remove{
-    background:none; border:none; color:var(--text-dim); font-size:15px; font-weight:800;
-    cursor:pointer; padding:0 5px; line-height:1;
+    background:none; border:none; color:var(--text-dim); font-size:17px; font-weight:800;
+    cursor:pointer; padding:0; line-height:1; min-width:28px; min-height:28px;
+    display:inline-flex; align-items:center; justify-content:center; border-radius:50%;
   }
   .area-chip-remove:hover{ color:var(--high); }
   .worktype-suggest-btn{
@@ -689,6 +697,28 @@
     /* 모바일에서 통계 카드가 5개로 늘어나 한 줄(5열)엔 너무 빽빽해지므로
        3열 x 2행으로 바꿔 글자가 안 눌리게 한다. */
     .stats{ grid-template-columns:repeat(3,1fr); }
+    .stat-card{ padding:9px 8px; }
+    .header{ padding:12px 14px; gap:10px; }
+    .header-right{ gap:8px; }
+    .lang-switch .lang-btn{ min-height:34px; min-width:32px; padding-left:6px; padding-right:6px; }
+    /* 휴대폰은 지도 높이가 낮아서 안내창이 지도 위를 덮으면 그릴 곳이 거의 안 남는다.
+       안내창(완료/취소)을 화면 아래(탭바 바로 위)에 띄워 지도 전체를 쓸 수 있게 한다. */
+    .place-hint{ position:fixed; top:auto; left:12px; right:12px; bottom:88px; z-index:60; box-shadow:0 6px 20px rgba(0,0,0,0.18); }
+    /* 날씨: 좁은 화면에서 옆으로 넘쳐 가로 스크롤이 생기지 않게 출처/기준시각은 숨기고 줄바꿈 허용 */
+    .weather-widget{ white-space:normal; flex-wrap:wrap; min-width:0; max-width:100%; }
+    .weather-widget .w-src{ display:none; }
+    .header-right{ min-width:0; max-width:100%; }
+    /* iOS 사파리는 글자 16px 미만 입력칸을 누르면 화면을 확대해 버린다 */
+    .dash-search-input-wrap input, .site-name-input{ font-size:16px; }
+    /* 손가락으로 누르기 쉽게 장비 수량 버튼 확대 */
+    .equip-chip .equip-qty-btn{ width:28px; height:28px; font-size:16px; }
+    /* 작업현황 필터칩: 휴대폰에서 첫 화면이 필터로 꽉 차지 않게 한 줄 가로 스크롤 */
+    #page-status .chip-row{ flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; margin-bottom:10px; padding-bottom:2px; scrollbar-width:none; }
+    #page-status .chip-row::-webkit-scrollbar{ display:none; }
+    #page-status .chip{ padding:8px 14px; font-size:14px; white-space:nowrap; flex-shrink:0; }
+    .export-row{ gap:6px; }
+    .export-btn{ min-width:0; padding:9px 4px; }
+    .export-label{ font-size:13px; white-space:nowrap; }
     .legend .dot{ width:9px; height:9px; }
     .sidebar{ max-width:none; min-height:0; border-left:none; border-right:none; border-top:1px solid var(--border); }
     .sidebar-list{ max-height:60vh; }
@@ -799,7 +829,7 @@
     <div class="page-inner">
       <div class="page-header">
         <button class="page-back" id="page-back-btn" data-i18n="back">← 뒤로</button>
-        <h2 id="modal-title" data-i18n="work_add_title">위험작업 등록</h2>
+        <h2 id="modal-title">위험작업 등록</h2>
         <button type="button" class="btn" id="import-work-btn" style="margin-left:auto; white-space:nowrap;" data-i18n="import_work_btn">📥 가져오기</button>
       </div>
 
@@ -905,7 +935,7 @@
 
       <div class="date-nav status-date-nav" id="status-date-nav">
         <button id="status-prev-day" type="button" title="이전 날짜" data-i18n-title="prev_day_title">‹</button>
-        <input type="date" id="status-date-picker">
+        <input type="date" id="status-date-picker" autocomplete="off">
         <button id="status-next-day" type="button" title="다음 날짜" data-i18n-title="next_day_title">›</button>
         <button id="status-date-today" type="button" class="status-date-today-btn" data-i18n="today_btn">오늘</button>
       </div>
@@ -1322,8 +1352,8 @@ const db = getFirestore(fbApp);
       empty_desc_admin: "구글맵 또는 네이버맵에서 현장을 위성/항공 뷰로 띄운 뒤 화면을 캡처해서 올려주세요. 이후엔 계속 저장되어 다시 올릴 필요 없어요.",
       empty_title_noadmin: "위성지도가 아직 없습니다",
       empty_desc_noadmin: "관리자가 위성지도를 업로드하면 여기에 표시됩니다.",
-      place_hint_reposition: "이동할 위치를 지도에서 클릭하세요",
-      place_hint_default: "지도를 클릭해서 위치를 지정하세요",
+      place_hint_reposition: "이동할 위치를 지도에서 눌러주세요",
+      place_hint_default: "지도를 눌러서 위치를 지정하세요",
       cancel: "취소",
       area_draw_hint: "지도를 드래그해서 작업범위를 표시하세요",
       area_draw_hint_more: (count) => `계속 드래그해서 범위를 추가하거나, 완료를 누르세요 (${count}개 추가됨)`,
@@ -1340,6 +1370,30 @@ const db = getFirestore(fbApp);
       stat_low: "저위험 건수",
       back: "← 뒤로",
       work_add_title: "위험작업 등록",
+      save_slow: "⏳ 인터넷 연결이 느려 저장이 늦어지고 있습니다. 연결되면 자동으로 저장되며, 다시 눌러도 중복으로 등록되지 않습니다.",
+      work_edit_title: "위험작업 수정",
+      work_copy_title: "위험작업 등록 (복사됨)",
+      err_zone_required: "⚠ 위치를 먼저 선택(또는 새로 등록)해주세요.",
+      err_worktype_required: "⚠ 작업 내용을 입력해주세요.",
+      saving: "🔄 저장 중...",
+      save_failed: "❌ 저장하지 못했습니다. 인터넷 연결을 확인하고 다시 눌러주세요.",
+      work_delete_confirm: "이 작업을 삭제할까요? 삭제하면 모든 사람의 화면에서 사라집니다.",
+      delete_failed: "❌ 삭제하지 못했습니다. 잠시 후 다시 시도해주세요.",
+      photo_read_error: "❌ 파일을 읽을 수 없습니다. 다시 시도해주세요.",
+      photo_format_error: "❌ 이 이미지 형식은 지원되지 않습니다. JPG/PNG로 다시 시도해주세요.",
+      w_clear: "맑음",
+      w_mostly_clear: "대체로 맑음",
+      w_cloudy: "흐림",
+      w_fog: "안개",
+      w_drizzle: "이슬비",
+      w_rain: "비",
+      w_snow: "눈",
+      w_shower: "소나기",
+      w_thunder: "뇌우",
+      w_weather: "날씨",
+      w_feels: "체감",
+      w_as_of: "기준",
+      date_rolled_over: "📅 날짜가 바뀌어 오늘 작업으로 새로 불러왔습니다.",
       import_work_btn: "📥 가져오기",
       import_work_title: "전날 작업 불러오기",
       import_work_date_label: (date)=>`${date} 작업 목록`,
@@ -1586,7 +1640,7 @@ const db = getFirestore(fbApp);
       empty_desc_admin: "请在谷歌地图或Naver地图中以卫星/航拍视图打开现场后截图上传。上传后会一直保存，无需重复上传。",
       empty_title_noadmin: "暂无卫星地图",
       empty_desc_noadmin: "管理员上传卫星地图后将显示在此处。",
-      place_hint_reposition: "请在地图上点击要移动到的位置",
+      place_hint_reposition: "请在地图上点按要移动到的位置",
       place_hint_default: "请点击地图以指定位置",
       cancel: "取消",
       area_draw_hint: "请拖动地图以标出作业范围",
@@ -1604,6 +1658,30 @@ const db = getFirestore(fbApp);
       stat_low: "低风险件数",
       back: "← 返回",
       work_add_title: "登记危险作业",
+      save_slow: "⏳ 网络较慢，保存有所延迟。连接恢复后会自动保存，再次点击也不会重复登记。",
+      work_edit_title: "修改危险作业",
+      work_copy_title: "登记危险作业（已复制）",
+      err_zone_required: "⚠ 请先选择位置（或新建位置）。",
+      err_worktype_required: "⚠ 请输入作业内容。",
+      saving: "🔄 正在保存...",
+      save_failed: "❌ 保存失败。请检查网络连接后再试一次。",
+      work_delete_confirm: "确定删除此作业吗？删除后所有人都将看不到。",
+      delete_failed: "❌ 删除失败，请稍后重试。",
+      photo_read_error: "❌ 无法读取文件，请重试。",
+      photo_format_error: "❌ 不支持此图片格式，请使用JPG/PNG。",
+      w_clear: "晴",
+      w_mostly_clear: "晴间多云",
+      w_cloudy: "阴",
+      w_fog: "雾",
+      w_drizzle: "毛毛雨",
+      w_rain: "雨",
+      w_snow: "雪",
+      w_shower: "阵雨",
+      w_thunder: "雷雨",
+      w_weather: "天气",
+      w_feels: "体感",
+      w_as_of: "更新",
+      date_rolled_over: "📅 日期已变更，已重新加载今天的作业。",
       import_work_btn: "📥 导入",
       import_work_title: "导入前一天的作业",
       import_work_date_label: (date)=>`${date} 作业列表`,
@@ -1850,8 +1928,8 @@ const db = getFirestore(fbApp);
       empty_desc_admin: "Open the site in satellite/aerial view on Google Maps or Naver Map, capture the screen, and upload it here. Once uploaded, it stays saved — no need to upload again.",
       empty_title_noadmin: "No satellite map yet",
       empty_desc_noadmin: "It will appear here once an admin uploads a satellite map.",
-      place_hint_reposition: "Click the map at the new location",
-      place_hint_default: "Click the map to set a location",
+      place_hint_reposition: "Tap the map at the new location",
+      place_hint_default: "Tap the map to set a location",
       cancel: "Cancel",
       area_draw_hint: "Drag on the map to mark the work area",
       area_draw_hint_more: (count) => `Keep dragging to add more areas, or tap Done (${count} added)`,
@@ -1868,6 +1946,30 @@ const db = getFirestore(fbApp);
       stat_low: "Low-risk count",
       back: "← Back",
       work_add_title: "Register hazardous work",
+      save_slow: "⏳ Your connection is slow, so saving is delayed. It will save automatically once connected; tapping again will not create a duplicate.",
+      work_edit_title: "Edit hazardous work",
+      work_copy_title: "Register hazardous work (copied)",
+      err_zone_required: "⚠ Please select a location first (or add a new one).",
+      err_worktype_required: "⚠ Please enter the work description.",
+      saving: "🔄 Saving...",
+      save_failed: "❌ Could not save. Check your internet connection and tap again.",
+      work_delete_confirm: "Delete this work? It will disappear for everyone.",
+      delete_failed: "❌ Could not delete. Please try again later.",
+      photo_read_error: "❌ Could not read the file. Please try again.",
+      photo_format_error: "❌ This image format is not supported. Please use JPG/PNG.",
+      w_clear: "Clear",
+      w_mostly_clear: "Mostly clear",
+      w_cloudy: "Cloudy",
+      w_fog: "Fog",
+      w_drizzle: "Drizzle",
+      w_rain: "Rain",
+      w_snow: "Snow",
+      w_shower: "Showers",
+      w_thunder: "Thunderstorm",
+      w_weather: "Weather",
+      w_feels: "Feels",
+      w_as_of: "as of",
+      date_rolled_over: "📅 The date changed, so today's works were loaded.",
       import_work_btn: "📥 Import",
       import_work_title: "Import previous day's work",
       import_work_date_label: (date)=>`Work list for ${date}`,
@@ -2156,6 +2258,8 @@ const db = getFirestore(fbApp);
     safeCall(typeof renderEquipList === 'function' ? renderEquipList : null);
     safeCall(typeof renderStaffChecklist === 'function' ? renderStaffChecklist : null);
     safeCall(typeof renderWeatherAlert === 'function' ? renderWeatherAlert : null);
+    safeCall(typeof renderWeatherWidget === 'function' ? renderWeatherWidget : null);
+    safeCall(typeof updateWorkFormTitle === 'function' ? updateWorkFormTitle : null);
     safeCall(typeof applyReportTypeUI === 'function' ? applyReportTypeUI : null);
     safeCall(typeof renderReportList === 'function' ? renderReportList : null);
   }
@@ -2179,10 +2283,34 @@ const db = getFirestore(fbApp);
   let isAdmin = false;
   let pendingAdminAction = null; // function to run after successful PIN entry
 
+  // 신고 데이터 구독: 일반 사용자는 모두에게 공개되는 아차사고만 받아온다.
+  // (안전개선 신고 사진까지 모든 휴대폰이 매번 내려받으면 데이터가 낭비되고,
+  //  관리자 전용 내용이 일반 기기로 전송되지도 않게 하기 위함)
+  // 관리자 모드가 켜지면 전체 신고를 받아온다.
+  let unsubHazardReports = null;
+  let hazardReportsScope = null; // 'all' | 'near_miss'
+  function subscribeHazardReports(){
+    const scope = isAdmin ? 'all' : 'near_miss';
+    if(scope === hazardReportsScope && unsubHazardReports) return;
+    if(unsubHazardReports){ unsubHazardReports(); unsubHazardReports = null; }
+    hazardReportsScope = scope;
+    const ref = scope === 'all'
+      ? collection(db, 'hazard_reports')
+      : query(collection(db, 'hazard_reports'), where('type', '==', 'near_miss'));
+    unsubHazardReports = onSnapshot(ref, (snap)=>{
+      hazardReports = snap.docs.map(d=>({ id: d.id, ...d.data() }))
+        .sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
+      renderReportList();
+    }, (err)=>{ console.error('hazard reports listen error', err); });
+  }
   function setAdminUI(){
+    if(typeof hazardReportsScope !== 'undefined' && hazardReportsScope !== null) subscribeHazardReports();
     document.querySelectorAll('.admin-only').forEach(el=>{
       el.style.display = isAdmin ? '' : 'none';
     });
+    // 현장명은 모든 사람 화면에 공유되므로 관리자 모드에서만 고칠 수 있게 한다
+    // (일반 사용자가 실수로 누르거나 브라우저 자동완성이 채워서 현장명이 바뀌는 것 방지)
+    if(siteNameInput) siteNameInput.readOnly = !isAdmin;
     if(!mapImageURL){
       if(isAdmin){
         $('empty-title').textContent = t('empty_title');
@@ -2470,15 +2598,13 @@ const db = getFirestore(fbApp);
     onSnapshot(collection(db, 'staff'), (snap)=>{
       staffList = snap.docs.map(d=>({ id: d.id, ...d.data() }));
       renderStaffPageList();
+      // 작업등록 화면이 열려 있는 동안 담당자가 추가/로딩되면 드롭다운도 바로 갱신
+      renderStaffChecklist();
     }, (err)=>{ console.error('staff listen error', err); });
 
     // 안전개선신고(hazard_reports) collection, realtime — 목록 렌더링은
     // renderReportList() 내부에서 isAdmin일 때만 실제로 DOM에 채워진다.
-    onSnapshot(collection(db, 'hazard_reports'), (snap)=>{
-      hazardReports = snap.docs.map(d=>({ id: d.id, ...d.data() }))
-        .sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
-      renderReportList();
-    }, (err)=>{ console.error('hazard reports listen error', err); });
+    subscribeHazardReports();
 
     subscribeWorks(currentDate);
 
@@ -2587,16 +2713,31 @@ const db = getFirestore(fbApp);
   // 혹시 네트워크 문제 등으로 데이터가 안 오더라도 화면이 계속 로딩중으로 막혀있지 않도록 안전장치
   setTimeout(hideAppLoadingOverlay, 6000);
 
+  // 데이터베이스에서 받은 작업을 화면에 그리기 전에 형식을 정리한다.
+  // 숫자칸은 숫자로, 위험도/상태는 정해진 값으로, 시간은 숫자·":"·"~"만 남긴다.
+  // (보안 규칙이 열려 있어 누군가 이상한 값을 직접 넣어도 화면에서 스크립트가 실행되지 않게)
+  function sanitizeWork(m){
+    m.people = Number(m.people) || 0;
+    m.vulnerable = Number(m.vulnerable) || 0;
+    if(!['high','mid','low'].includes(m.risk)) m.risk = 'high';
+    if(m.status !== 'done') m.status = 'in_progress';
+    m.time = typeof m.time === 'string' ? m.time.replace(/[^0-9:~\s-]/g, '').trim() : '';
+    if(typeof m.workType !== 'string') m.workType = '';
+    if(typeof m.company !== 'string') m.company = '';
+    if(typeof m.supervisor !== 'string') m.supervisor = '';
+    return m;
+  }
   function subscribeWorks(date){
     if(unsubWorks) unsubWorks();
     const q = query(collection(db, 'works'), where('date', '==', date));
     unsubWorks = onSnapshot(q, (snap)=>{
-      markers = snap.docs.map(d=>({ id: d.id, ...d.data() }));
+      markers = snap.docs.map(d=> sanitizeWork({ id: d.id, ...d.data() }));
       renderAllPins();
       renderSidebar();
       renderFullWorkList();
       renderStats();
       renderEquipmentSummary();
+      updateDashFilterBadge();
       // 작업현황 화면에 날짜 이동 기능을 추가하면서, 날짜를 바꿔서 새로
       // 작업 목록을 구독해 받아올 때 그 화면이 실제로 다시 그려지지 않던
       // 문제를 같이 고쳤다(이전에는 여기서 renderStatusList()를 호출하지
@@ -2611,15 +2752,24 @@ const db = getFirestore(fbApp);
   // ---------------- 종료 시간이 지나면 자동 완료 처리 ----------------
   // "시작~종료" 또는 종료 시간만 있는 경우, 그 시간이 지났는데 아직 "진행중"이면 자동으로 "완료"로 바꿔준다.
   // 오늘 날짜를 보고 있을 때만 적용 (지난 날짜/미래 날짜 조회 중에는 건드리지 않음).
+  // "시작~종료" 형식일 때만 종료시각을 돌려준다. 시작시간만 적은 경우(예: "17:00")나
+  // 자정을 넘기는 야간작업(예: "22:00~06:00")은 자동 완료 대상에서 뺀다
+  // (예전에는 시작시간을 종료시간으로 착각하거나, 야간작업을 등록하자마자 완료로 바꿨음).
   function parseEndTimeStr(timeStr){
     if(!timeStr) return null;
     const parts = String(timeStr).split('~');
-    const endPart = (parts.length > 1 ? parts[1] : parts[0]).trim();
-    const m = endPart.match(/^(\d{1,2}):(\d{2})$/);
-    if(!m) return null;
-    const h = parseInt(m[1], 10), mi = parseInt(m[2], 10);
-    if(h > 23 || mi > 59) return null;
-    return h * 60 + mi;
+    if(parts.length < 2) return null;
+    const toMin = (str)=>{
+      const m = String(str).trim().match(/^(\d{1,2}):(\d{2})$/);
+      if(!m) return null;
+      const h = parseInt(m[1], 10), mi = parseInt(m[2], 10);
+      if(h > 23 || mi > 59) return null;
+      return h * 60 + mi;
+    };
+    const start = toMin(parts[0]), end = toMin(parts[1]);
+    if(end === null) return null;
+    if(start !== null && end <= start) return null; // 자정 넘김
+    return end;
   }
   async function autoCompleteExpiredWorks(){
     if(currentDate !== todayStr()) return;
@@ -2665,6 +2815,28 @@ const db = getFirestore(fbApp);
     setCurrentDate(toISO(d));
   }
   datePicker.addEventListener('change', ()=> setCurrentDate(datePicker.value));
+  // 앱을 켜 둔 채로 날이 바뀐 뒤 다시 화면을 열면(다음날 아침 등), "오늘"을 보고 있던
+  // 경우에만 새 날짜로 자동 전환한다. (지난 날짜를 일부러 보고 있던 경우는 그대로 둔다)
+  let lastKnownToday = todayStr();
+  function checkDateRollover(){
+    const nowToday = todayStr();
+    if(nowToday === lastKnownToday) return;
+    const wasViewingToday = currentDate === lastKnownToday;
+    lastKnownToday = nowToday;
+    if(wasViewingToday) setCurrentDate(nowToday);
+  }
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible') checkDateRollover(); });
+  // PC에서 Esc 키로 열려 있는 팝업(작업 상세, 필터 등)을 닫는다 — 각 팝업의 ✕ 버튼을 대신 눌러줌
+  document.addEventListener('keydown', (e)=>{
+    if(e.key !== 'Escape') return;
+    const lb = $('photo-lightbox');
+    if(lb && lb.classList.contains('show')){ lb.click(); return; }
+    const open = [...document.querySelectorAll('.modal-backdrop.show')].pop();
+    if(!open) return;
+    const closeBtn = open.querySelector('.modal-close-x');
+    if(closeBtn) closeBtn.click();
+  });
+  setInterval(checkDateRollover, 60000);
   $('prev-day').addEventListener('click', ()=> shiftCurrentDate(-1));
   $('next-day').addEventListener('click', ()=> shiftCurrentDate(1));
 
@@ -2838,6 +3010,8 @@ const db = getFirestore(fbApp);
     $('area-draw-hint').style.display = 'flex';
     mapWrap.classList.add('area-drawing');
     hideWorkPage();
+    // 대시보드가 아래로 스크롤돼 있으면 지도가 안 보이므로 지도가 보이게 올려준다
+    try{ mapWrap.scrollIntoView({ block:'start' }); }catch(e){}
   }
   function exitAreaDrawingUI(){
     drawingArea = false;
@@ -2875,6 +3049,7 @@ const db = getFirestore(fbApp);
     mapCanvas.appendChild(liveAreaRectEl);
     window.addEventListener('pointermove', onAreaPointerMove);
     window.addEventListener('pointerup', onAreaPointerUp, { once:true });
+    window.addEventListener('pointercancel', onAreaPointerCancel, { once:true });
   }
   function onAreaPointerMove(e){
     if(!drawingArea || !areaDrawStartPct || !liveAreaRectEl) return;
@@ -2886,8 +3061,16 @@ const db = getFirestore(fbApp);
     liveAreaRectEl.style.width = (x2-x1) + '%';
     liveAreaRectEl.style.height = (y2-y1) + '%';
   }
+  // 휴대폰에서 그리던 중 브라우저가 터치를 가져가면(pointercancel) 반쯤 그린 사각형을 정리
+  function onAreaPointerCancel(){
+    window.removeEventListener('pointermove', onAreaPointerMove);
+    window.removeEventListener('pointerup', onAreaPointerUp);
+    areaDrawStartPct = null;
+    if(liveAreaRectEl){ liveAreaRectEl.remove(); liveAreaRectEl = null; }
+  }
   function onAreaPointerUp(e){
     window.removeEventListener('pointermove', onAreaPointerMove);
+    window.removeEventListener('pointercancel', onAreaPointerCancel);
     if(!drawingArea || !areaDrawStartPct){ return; }
     const cur = pctFromEvent(e);
     const x1 = Math.min(areaDrawStartPct.x, cur.x), x2 = Math.max(areaDrawStartPct.x, cur.x);
@@ -2958,7 +3141,27 @@ const db = getFirestore(fbApp);
     placeHint.classList.remove('show');
     mapWrap.classList.remove('place-cursor');
   }
-  $('place-hint-cancel').addEventListener('click', cancelPlacing);
+  // 작업등록 화면에서 "＋ 새 위치"로 나갔다가 돌아올 때, 입력하던 내용을 지우지 않고
+  // 그대로 작업등록 화면으로 되돌아간다(예전에는 폼 전체가 초기화됐었음).
+  function returnToWorkFormAfterPlacing(zoneId){
+    if(!placingFromWorkModal) return false;
+    placingFromWorkModal = false;
+    showWorkPage();
+    setActiveTab('add-work');
+    if(zoneId) populateZoneSelect(zoneId);
+    return true;
+  }
+  $('place-hint-cancel').addEventListener('click', ()=>{ cancelPlacing(); returnToWorkFormAfterPlacing(null); });
+  // 위치 찍기/범위 그리기 중에 하단 탭으로 다른 화면으로 가면 그 모드를 끝낸다
+  // (안 그러면 안내창이 계속 떠 있고 지도를 누를 때마다 "새 위치 이름" 창이 뜸)
+  document.querySelector('.bottom-tabbar').addEventListener('click', (e)=>{
+    if(!e.target.closest('.tab-btn')) return;
+    if(placing){ cancelPlacing(); placingFromWorkModal = false; }
+    if(drawingArea){
+      pendingAreas = pendingAreas.slice(0, areaDrawSessionStartCount);
+      exitAreaDrawingUI();
+    }
+  }, true);
 
   function onMapClick(e){
     if(!placing) return;
@@ -2999,8 +3202,13 @@ const db = getFirestore(fbApp);
     zoneNameBackdrop.classList.add('show');
     setTimeout(()=>$('zn-name').focus(), 50);
   }
-  $('zone-name-close').addEventListener('click', ()=>{ zoneNameBackdrop.classList.remove('show'); pendingZoneCoords = null; renameMode = false; pendingRenameId = null; });
-  zoneNameBackdrop.addEventListener('click', (e)=>{ if(e.target === zoneNameBackdrop){ zoneNameBackdrop.classList.remove('show'); pendingZoneCoords = null; renameMode = false; pendingRenameId = null; } });
+  function closeZoneNameModal(){
+    const wasNewZone = !!pendingZoneCoords && !renameMode;
+    zoneNameBackdrop.classList.remove('show'); pendingZoneCoords = null; renameMode = false; pendingRenameId = null;
+    if(wasNewZone) returnToWorkFormAfterPlacing(null);
+  }
+  $('zone-name-close').addEventListener('click', closeZoneNameModal);
+  zoneNameBackdrop.addEventListener('click', (e)=>{ if(e.target === zoneNameBackdrop) closeZoneNameModal(); });
 
   $('zn-save').addEventListener('click', async ()=>{
     const name = $('zn-name').value.trim();
@@ -3030,9 +3238,7 @@ const db = getFirestore(fbApp);
       zoneNameBackdrop.classList.remove('show');
       pendingZoneCoords = null;
 
-      if(placingFromWorkModal){
-        openWorkModal(null, newZone.id);
-      } else {
+      if(!returnToWorkFormAfterPlacing(newZone.id)){
         openZoneManageModal();
       }
     }catch(e){
@@ -3256,7 +3462,9 @@ const db = getFirestore(fbApp);
   });
   $('report-page-back-btn').addEventListener('click', ()=>{ closeAllPages(); setActiveTab('dashboard'); });
 
+  let newReportDocId = null;
   function resetReportForm(){
+    newReportDocId = null;
     reportPhotoDataURL = null;
     reportPhotoInput.value = '';
     reportPhotoPreview.style.display = 'none';
@@ -3279,14 +3487,14 @@ const db = getFirestore(fbApp);
     const reader = new FileReader();
     reader.onerror = ()=>{
       reportFormError.style.color = 'var(--high)';
-      reportFormError.textContent = '❌ 파일을 읽을 수 없습니다. 다시 시도해주세요.';
+      reportFormError.textContent = t('photo_read_error');
       reportFormError.style.display = 'block';
     };
     reader.onload = (ev)=>{
       const img = new Image();
       img.onerror = ()=>{
         reportFormError.style.color = 'var(--high)';
-        reportFormError.textContent = '❌ 이 이미지 형식은 지원되지 않습니다. JPG/PNG로 다시 시도해주세요.';
+        reportFormError.textContent = t('photo_format_error');
         reportFormError.style.display = 'block';
       };
       img.onload = ()=>{
@@ -3328,8 +3536,9 @@ const db = getFirestore(fbApp);
     reportSubmitBtn.disabled = true;
     reportSubmitBtn.textContent = t(nm ? 'near_miss_submitting' : 'report_submitting');
     try{
+      if(!newReportDocId) newReportDocId = doc(collection(db,'hazard_reports')).id; // 재시도해도 중복 안 되게
       await Promise.race([
-        addDoc(collection(db,'hazard_reports'), {
+        setDoc(doc(db,'hazard_reports',newReportDocId), {
           type: nm ? 'near_miss' : 'hazard',
           photo: reportPhotoDataURL,
           content,
@@ -3346,7 +3555,7 @@ const db = getFirestore(fbApp);
     }catch(err){
       console.error('report submit failed', err);
       reportFormError.style.color = 'var(--high)';
-      reportFormError.textContent = t(nm ? 'near_miss_submit_error' : 'report_submit_error');
+      reportFormError.textContent = (err && err.message === 'TIMEOUT') ? t('save_slow') : t(nm ? 'near_miss_submit_error' : 'report_submit_error');
       reportFormError.style.display = 'block';
     }finally{
       reportSubmitBtn.disabled = false;
@@ -3356,8 +3565,10 @@ const db = getFirestore(fbApp);
 
   function reportItemHTML(r, deletable){
     const dt = r.createdAt ? new Date(r.createdAt).toLocaleString('ko-KR') : '';
-    return `<div class="report-item" data-id="${r.id}">
-        ${r.photo ? `<img src="${r.photo}" alt="" data-act="zoom-photo">` : ''}
+    // 사진은 앱이 만든 data:image 형식만 표시 (데이터베이스에 다른 값이 들어와도 스크립트가 실행되지 않게)
+    const photoOk = typeof r.photo === 'string' && /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(r.photo);
+    return `<div class="report-item" data-id="${escapeHTML(r.id)}">
+        ${photoOk ? `<img src="${r.photo}" alt="" data-act="zoom-photo">` : ''}
         <div class="body">
           <div class="content">${escapeHTML(r.content||'')}</div>
           <div class="meta">👤 ${escapeHTML(r.reporter ? r.reporter : t('report_reporter_anon'))} · ${escapeHTML(dt)}</div>
@@ -3572,7 +3783,7 @@ const db = getFirestore(fbApp);
     if(type === 'other'){
       equipOtherOpen = true;
       renderEquipList();
-      setTimeout(()=>$('f-equip-other').focus(), 50);
+      $('f-equip-other').focus(); // 바로 입력할 수 있게 (지연 없이 — 늦게 포커스를 옮기면 다른 칸 입력을 가로챌 수 있음)
       return;
     }
     if(!currentEquipment.find(x=>x.type===type)){
@@ -3742,6 +3953,24 @@ const db = getFirestore(fbApp);
   });
 
   const dashFilterBackdrop = $('dash-filter-backdrop');
+  // 필터 창 안에서 누르는 것은 "임시(draft)" 상태만 바꾸고, [적용]을 눌러야
+  // 실제 화면에 반영된다. [✕]나 바깥을 눌러 닫으면 바꾼 내용은 버려진다.
+  // (예전에는 칩을 누르는 즉시 실제 필터가 바뀌어서, 적용 없이 닫아도 다음
+  //  데이터 갱신 때 몰래 필터가 걸리는 문제가 있었다)
+  const dashDraft = { risks:new Set(), statuses:new Set(), companies:new Set(), vulnerableOnly:false };
+  function loadDashDraft(){
+    dashDraft.risks = new Set(dashExcludedRisks);
+    dashDraft.statuses = new Set(dashExcludedStatuses);
+    dashDraft.companies = new Set(dashExcludedCompanies);
+    dashDraft.vulnerableOnly = dashFilterVulnerableOnly;
+  }
+  function commitDashDraft(){
+    const copy = (src, dst)=>{ dst.clear(); src.forEach(v=>dst.add(v)); };
+    copy(dashDraft.risks, dashExcludedRisks);
+    copy(dashDraft.statuses, dashExcludedStatuses);
+    copy(dashDraft.companies, dashExcludedCompanies);
+    dashFilterVulnerableOnly = dashDraft.vulnerableOnly;
+  }
   function renderDashFilterCompanyList(){
     const wrap = $('dash-filter-company-list');
     const companies = [...new Set(markers.map(m=>m.company).filter(Boolean))].sort();
@@ -3755,24 +3984,27 @@ const db = getFirestore(fbApp);
     companies.forEach(name=>{
       const label = document.createElement('label');
       label.className = 'staff-chip';
-      const checked = !dashExcludedCompanies.has(name);
+      const checked = !dashDraft.companies.has(name);
       if(checked) label.classList.add('checked');
       label.innerHTML = `<input type="checkbox" value="${escapeHTML(name)}" ${checked?'checked':''}> <i style="width:8px;height:8px;border-radius:50%;background:${companyColor(name)};display:inline-block;margin-right:2px;"></i>${escapeHTML(name)}`;
       label.querySelector('input').addEventListener('change', (e)=>{
         label.classList.toggle('checked', e.target.checked);
-        if(e.target.checked) dashExcludedCompanies.delete(name); else dashExcludedCompanies.add(name);
+        if(e.target.checked) dashDraft.companies.delete(name); else dashDraft.companies.add(name);
       });
       wrap.appendChild(label);
     });
   }
   function syncDashFilterChips(){
-    document.querySelectorAll('#dash-filter-risk-chips .chip').forEach(btn=> btn.classList.toggle('active', !dashExcludedRisks.has(btn.dataset.risk)));
-    document.querySelectorAll('#dash-filter-status-chips .chip').forEach(btn=> btn.classList.toggle('active', !dashExcludedStatuses.has(btn.dataset.status)));
+    document.querySelectorAll('#dash-filter-risk-chips .chip').forEach(btn=> btn.classList.toggle('active', !dashDraft.risks.has(btn.dataset.risk)));
+    document.querySelectorAll('#dash-filter-status-chips .chip').forEach(btn=> btn.classList.toggle('active', !dashDraft.statuses.has(btn.dataset.status)));
+    // "취약근로자 포함 작업만"은 체크박스가 숨겨져 있어서, 켜짐 상태를 칩 색으로 보여준다
+    $('dash-filter-vulnerable').checked = dashDraft.vulnerableOnly;
+    $('dash-filter-vulnerable-chip').classList.toggle('checked', dashDraft.vulnerableOnly);
   }
   function openDashFilterModal(){
+    loadDashDraft();
     renderDashFilterCompanyList();
     syncDashFilterChips();
-    $('dash-filter-vulnerable').checked = dashFilterVulnerableOnly;
     dashFilterBackdrop.classList.add('show');
   }
   function closeDashFilterModal(){ dashFilterBackdrop.classList.remove('show'); }
@@ -3782,30 +4014,31 @@ const db = getFirestore(fbApp);
   document.querySelectorAll('#dash-filter-risk-chips .chip').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const r = btn.dataset.risk;
-      if(dashExcludedRisks.has(r)) dashExcludedRisks.delete(r); else dashExcludedRisks.add(r);
+      if(dashDraft.risks.has(r)) dashDraft.risks.delete(r); else dashDraft.risks.add(r);
       syncDashFilterChips();
     });
   });
   document.querySelectorAll('#dash-filter-status-chips .chip').forEach(btn=>{
     btn.addEventListener('click', ()=>{
-      const s = btn.dataset.status;
-      if(dashExcludedStatuses.has(s)) dashExcludedStatuses.delete(s); else dashExcludedStatuses.add(s);
+      const st = btn.dataset.status;
+      if(dashDraft.statuses.has(st)) dashDraft.statuses.delete(st); else dashDraft.statuses.add(st);
       syncDashFilterChips();
     });
   });
+  $('dash-filter-vulnerable').addEventListener('change', (e)=>{
+    dashDraft.vulnerableOnly = e.target.checked;
+    syncDashFilterChips();
+  });
   $('dash-filter-apply').addEventListener('click', ()=>{
-    dashFilterVulnerableOnly = $('dash-filter-vulnerable').checked;
+    commitDashDraft();
     closeDashFilterModal();
     refreshDashboardViews();
   });
   $('dash-filter-reset').addEventListener('click', ()=>{
-    // 초기화 = 전부 선택(전체 표시) 상태로 되돌리기
-    dashExcludedRisks.clear();
-    dashExcludedStatuses.clear();
-    dashExcludedCompanies.clear();
-    dashFilterVulnerableOnly = false;
+    // 초기화 = 전부 선택(전체 표시) 상태로 되돌리고 바로 반영
+    dashDraft.risks.clear(); dashDraft.statuses.clear(); dashDraft.companies.clear(); dashDraft.vulnerableOnly = false;
+    commitDashDraft();
     syncDashFilterChips();
-    $('dash-filter-vulnerable').checked = false;
     renderDashFilterCompanyList();
     refreshDashboardViews();
   });
@@ -4195,6 +4428,12 @@ const db = getFirestore(fbApp);
     // 아예 지워서 CSS가 다시 제어하게 한다.
     mainArea.style.display = '';
   }
+  let workFormMode = 'add'; // 'add' | 'edit' | 'copy'
+  let newWorkDocId = null;
+  function updateWorkFormTitle(){
+    const el = $('modal-title');
+    if(el) el.textContent = t(workFormMode === 'copy' ? 'work_copy_title' : workFormMode === 'edit' ? 'work_edit_title' : 'work_add_title');
+  }
   function showWorkPage(){ closeAllPages(); mainArea.style.display = 'none'; workPage.style.display = 'block'; }
   function hideWorkPage(){ closeAllPages(); }
 
@@ -4226,8 +4465,10 @@ const db = getFirestore(fbApp);
     // duplicateFrom: 다른 작업의 id. 지정하면 그 작업 내용을 그대로 불러오되
     // "새 작업"으로 등록되도록 한다 (반복 입력 줄이기 - 복사해서 등록).
     editingId = duplicateFrom ? null : id;
+    newWorkDocId = null; // 새 작업의 문서 ID는 첫 저장 시 한 번만 만들고, 재시도 때도 같은 ID를 쓴다
     const m = duplicateFrom ? markers.find(x=>x.id===duplicateFrom) : (id ? markers.find(x=>x.id===id) : null);
-    $('modal-title').textContent = duplicateFrom ? '위험작업 등록 (복사됨)' : (m ? '위험작업 수정' : '위험작업 등록');
+    workFormMode = duplicateFrom ? 'copy' : (m ? 'edit' : 'add');
+    updateWorkFormTitle();
     // 전날 작업 가져오기는 새로 등록할 때만 의미가 있어서, 기존 작업을 수정할 때는 숨긴다
     const importBtnEl = $('import-work-btn');
     if(importBtnEl) importBtnEl.style.display = editingId ? 'none' : '';
@@ -4289,7 +4530,7 @@ const db = getFirestore(fbApp);
     }
     try{
       const snap = await getDocs(query(collection(db, 'works'), where('date', '==', prevDate)));
-      const items = snap.docs.map(d=>({ id: d.id, ...d.data() }));
+      const items = snap.docs.map(d=> sanitizeWork({ id: d.id, ...d.data() }));
       prevDayWorksCache = { date: prevDate, items };
       return items;
     }catch(err){
@@ -4746,13 +4987,13 @@ const db = getFirestore(fbApp);
 
     const errEl = $('work-form-error');
     if(!zoneId){
-      errEl.textContent = '⚠ 위치를 먼저 선택(또는 새로 등록)해주세요.';
+      errEl.textContent = t('err_zone_required');
       errEl.style.display = 'block';
       errEl.scrollIntoView({behavior:'smooth', block:'center'});
       return;
     }
     if(!workType){
-      errEl.textContent = '⚠ 작업 내용을 입력해주세요.';
+      errEl.textContent = t('err_worktype_required');
       errEl.style.display = 'block';
       $('f-worktype').focus();
       $('f-worktype').scrollIntoView({behavior:'smooth', block:'center'});
@@ -4760,28 +5001,51 @@ const db = getFirestore(fbApp);
     }
     errEl.style.display = 'none';
 
+    // 저장 중에는 버튼을 잠가서 두 번 눌러 같은 작업이 2개 생기는 것을 막고,
+    // 실패(권한 오류·네트워크 끊김·15초 응답 없음)하면 화면에 알려준다.
+    const saveBtn = $('save-btn');
+    if(saveBtn.disabled) return;
+    saveBtn.disabled = true;
+    saveBtn.textContent = t('saving');
+    const withTimeout = (pr)=> Promise.race([pr, new Promise((_, rej)=> setTimeout(()=> rej(new Error('TIMEOUT')), 15000))]);
     try{
       if(editingId){
-        await updateDoc(doc(db,'works',editingId), { zoneId, workType, people, vulnerable, time, company, supervisor, note, areas, area: null, status, risk: selectedRisk, equipment });
+        await withTimeout(updateDoc(doc(db,'works',editingId), { zoneId, workType, people, vulnerable, time, company, supervisor, note, areas, area: null, status, risk: selectedRisk, equipment }));
       } else {
-        await addDoc(collection(db,'works'), {
+        // 인터넷이 느릴 때 "저장 실패"를 보고 다시 눌러도 같은 작업이 2개 생기지 않도록,
+        // 새 작업의 문서 ID를 미리 정해 두고 그 ID로 저장한다(재시도하면 같은 문서를 덮어씀).
+        if(!newWorkDocId) newWorkDocId = doc(collection(db,'works')).id;
+        await withTimeout(setDoc(doc(db,'works',newWorkDocId), {
           date: currentDate, zoneId, workType, people, vulnerable, time, company, supervisor, note, areas, area: null, status, risk: selectedRisk, equipment, createdAt: Date.now()
-        });
+        }));
       }
       pushRecentValue('safetytop_recent_worktypes', workType);
       pushRecentValue('safetytop_recent_companies', company);
       closeWorkModal();
     }catch(e){
       console.error('work save failed', e);
+      errEl.textContent = t(e && e.message === 'TIMEOUT' ? 'save_slow' : 'save_failed');
+      errEl.style.display = 'block';
+      errEl.scrollIntoView({behavior:'smooth', block:'center'});
+    }finally{
+      saveBtn.disabled = false;
+      saveBtn.textContent = t('save_btn');
     }
   });
 
   $('delete-btn').addEventListener('click', async ()=>{
     if(!editingId) return;
+    // 실수로 한 번 눌러서 현장 전체에서 작업이 사라지지 않도록 한 번 더 확인
+    if(!confirm(t('work_delete_confirm'))) return;
     try{
       await deleteDoc(doc(db,'works',editingId));
       closeWorkModal();
-    }catch(e){ console.error('work delete failed', e); }
+    }catch(e){
+      console.error('work delete failed', e);
+      const errEl = $('work-form-error');
+      errEl.textContent = t('delete_failed');
+      errEl.style.display = 'block';
+    }
   });
 
   // ---------------- weather widget (Open-Meteo, free, no API key) ----------------
@@ -4790,16 +5054,27 @@ const db = getFirestore(fbApp);
   const WEATHER_LON = 126.8909;
 
   function weatherIconAndLabel(code){
-    if(code === 0) return ['☀️', '맑음'];
-    if([1,2].includes(code)) return ['🌤️', '대체로 맑음'];
-    if(code === 3) return ['☁️', '흐림'];
-    if([45,48].includes(code)) return ['🌫️', '안개'];
-    if([51,53,55,56,57].includes(code)) return ['🌦️', '이슬비'];
-    if([61,63,65,66,67].includes(code)) return ['🌧️', '비'];
-    if([71,73,75,77,85,86].includes(code)) return ['🌨️', '눈'];
-    if([80,81,82].includes(code)) return ['🌦️', '소나기'];
-    if([95,96,99].includes(code)) return ['⛈️', '뇌우'];
-    return ['🌡️', '날씨'];
+    if(code === 0) return ['☀️', t('w_clear')];
+    if([1,2].includes(code)) return ['🌤️', t('w_mostly_clear')];
+    if(code === 3) return ['☁️', t('w_cloudy')];
+    if([45,48].includes(code)) return ['🌫️', t('w_fog')];
+    if([51,53,55,56,57].includes(code)) return ['🌦️', t('w_drizzle')];
+    if([61,63,65,66,67].includes(code)) return ['🌧️', t('w_rain')];
+    if([71,73,75,77,85,86].includes(code)) return ['🌨️', t('w_snow')];
+    if([80,81,82].includes(code)) return ['🌦️', t('w_shower')];
+    if([95,96,99].includes(code)) return ['⛈️', t('w_thunder')];
+    return ['🌡️', t('w_weather')];
+  }
+  let lastWeather = null; // { temp, feels, code, time }
+  function renderWeatherWidget(){
+    const widget = $('weather-widget');
+    if(!widget || !lastWeather) return;
+    const { temp, feels, code, time } = lastWeather;
+    const [icon, label] = weatherIconAndLabel(code);
+    const timeStr = new Date(time).toLocaleTimeString(LANG === 'en' ? 'en-US' : LANG === 'zh' ? 'zh-CN' : 'ko-KR', { hour:'2-digit', minute:'2-digit' });
+    const feelsHtml = (feels !== null && feels !== temp) ? `<span class="w-meta w-feels">${escapeHTML(t('w_feels'))} ${feels}°</span>` : '';
+    widget.innerHTML = `<span class="w-icon">${icon}</span><span class="w-temp">${temp}°</span>${feelsHtml}<span class="w-label">${escapeHTML(label)}</span><span class="w-meta w-src">· ${escapeHTML(timeStr)} ${escapeHTML(t('w_as_of'))} · Open-Meteo</span>`;
+    widget.style.display = 'flex';
   }
 
   // ---------------- 폭염·한파 자동 경고 ----------------
@@ -4912,12 +5187,8 @@ const db = getFirestore(fbApp);
       const temp = Math.round(data.current.temperature_2m);
       const feels = (typeof data.current.apparent_temperature === 'number') ? Math.round(data.current.apparent_temperature) : null;
       const code = data.current.weather_code;
-      const [icon, label] = weatherIconAndLabel(code);
-      const timeStr = new Date(data.current.time).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
-      const widget = $('weather-widget');
-      const feelsHtml = (feels !== null && feels !== temp) ? `<span class="w-meta">체감 ${feels}°</span>` : '';
-      widget.innerHTML = `<span class="w-icon">${icon}</span><span class="w-temp">${temp}°</span>${feelsHtml}<span>${label}</span><span class="w-meta">· ${timeStr} 기준 · Open-Meteo</span>`;
-      widget.style.display = 'flex';
+      lastWeather = { temp, feels, code, time: data.current.time };
+      renderWeatherWidget();
       if(data.daily){
         weatherAlertState = evaluateWeatherAlert(data.daily);
         renderWeatherAlert();
