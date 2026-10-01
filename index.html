@@ -918,6 +918,7 @@
           <button type="button" class="staff-role-tab" data-role-group="supervisor" data-i18n="staff_tab_supervisor">관리감독자</button>
           <button type="button" class="staff-role-tab" data-role-group="partner" data-i18n="staff_tab_partner">협력업체 관리감독자</button>
         </div>
+        <div class="hint-text" id="partner-filter-hint" style="display:none; margin:-2px 0 8px;"></div>
         <select id="f-staff-select"></select>
         <div class="staff-check-list" id="f-supervisor-checks" style="margin-top:8px;"></div>
         <div class="hint-text" id="staff-hint" style="display:none;" data-i18n="staff_hint">등록된 담당자가 없습니다. 관리 탭 → 담당자 관리에서 먼저 등록해주세요.</div>
@@ -1246,6 +1247,12 @@
         <option value="안전보건총괄책임자" data-i18n="role_safety_chief">안전보건총괄책임자</option>
       </select>
     </div>
+    <!-- 협력업체 관리감독자는 소속 업체를 같이 지정 → 작업등록에서 그 업체 작업일 때만 목록에 나옴 -->
+    <div class="field" id="sn-company-field" style="display:none;">
+      <label><span data-i18n="label_staff_company">소속 업체</span> <span class="req-mark">*</span></label>
+      <input type="text" id="sn-company" list="sn-company-list" autocomplete="off" data-i18n-placeholder="staff_company_ph" placeholder="예: 태흥건설 (작업등록의 업체명과 같게)">
+      <datalist id="sn-company-list"></datalist>
+    </div>
     <div class="hint-text" id="sn-error" style="display:none; color:var(--high);" data-i18n="staff_save_error">저장에 실패하였습니다. 잠시 후 다시 시도해주세요.</div>
     <div class="modal-actions">
       <button class="btn primary" id="sn-save" style="width:100%;" data-i18n="save_btn">저장</button>
@@ -1378,6 +1385,12 @@ const db = getFirestore(fbApp);
       stat_low: "저위험 건수",
       back: "← 뒤로",
       work_add_title: "위험작업 등록",
+      label_staff_company: "소속 업체",
+      staff_company_ph: "예: 태흥건설 (작업등록의 업체명과 같게)",
+      staff_company_required: "⚠ 협력업체 관리감독자는 소속 업체를 입력해주세요.",
+      partner_none_for_company: "이 업체로 등록된 협력업체 관리감독자가 없습니다",
+      partner_filter_hint_txt: "위에 입력한 업체({c})의 관리감독자만 표시됩니다.",
+      partner_company_first: "위에서 업체명을 먼저 입력하면 그 업체 관리감독자만 표시됩니다.",
       zone_manual_option: "✏️ 직접 입력 (목록에 없는 위치)",
       zone_manual_ph: "예: 101동 지하주차장 입구",
       zone_manual_hint: "직접 입력한 위치는 지도에 핀이 표시되지 않고, 목록·작업현황에만 나옵니다.",
@@ -1676,6 +1689,12 @@ const db = getFirestore(fbApp);
       stat_low: "低风险件数",
       back: "← 返回",
       work_add_title: "登记危险作业",
+      label_staff_company: "所属公司",
+      staff_company_ph: "例：泰兴建设（与作业登记中的公司名称一致）",
+      staff_company_required: "⚠ 协作公司管理监督者请填写所属公司。",
+      partner_none_for_company: "该公司没有登记的协作公司管理监督者",
+      partner_filter_hint_txt: "仅显示上方输入的公司（{c}）的管理监督者。",
+      partner_company_first: "先在上方输入公司名称，即可只显示该公司的管理监督者。",
       zone_manual_option: "✏️ 直接输入（列表中没有的位置）",
       zone_manual_ph: "例：101栋地下停车场入口",
       zone_manual_hint: "直接输入的位置不会在地图上显示图钉，只显示在列表和作业现况中。",
@@ -1974,6 +1993,12 @@ const db = getFirestore(fbApp);
       stat_low: "Low-risk count",
       back: "← Back",
       work_add_title: "Register hazardous work",
+      label_staff_company: "Company",
+      staff_company_ph: "e.g. Taeheung Construction (same as in work registration)",
+      staff_company_required: "⚠ Please enter the company for a partner company supervisor.",
+      partner_none_for_company: "No partner supervisor registered for this company",
+      partner_filter_hint_txt: "Showing only supervisors of the company entered above ({c}).",
+      partner_company_first: "Enter the company above to show only that company’s supervisors.",
       zone_manual_option: "✏️ Type it in (not in the list)",
       zone_manual_ph: "e.g. Building 101 basement parking entrance",
       zone_manual_hint: "Typed-in locations have no pin on the map; they appear in the lists and work status only.",
@@ -3376,10 +3401,30 @@ const db = getFirestore(fbApp);
   }
   $('staff-page-back-btn').addEventListener('click', ()=>{ closeAllPages(); setActiveTab('dashboard'); });
 
+  // 업체명 비교: 띄어쓰기·(주)·주식회사 차이는 같은 업체로 본다
+  function normCompany(name){
+    return String(name || '').replace(/\(주\)|㈜|주식회사|\(유\)|유한회사/g, '').replace(/\s+/g, '').toLowerCase();
+  }
+  const PARTNER_ROLE = '협력업체 관리감독자';
+  function updateStaffCompanyField(){
+    const isPartner = $('sn-role').value === PARTNER_ROLE;
+    $('sn-company-field').style.display = isPartner ? 'block' : 'none';
+    if(isPartner){
+      // 자동완성 후보: 오늘·최근 작업의 업체명 + 이미 등록된 협력업체 관리감독자의 업체명
+      const names = new Set();
+      markers.forEach(m=>{ if(m.company) names.add(m.company); });
+      staffList.forEach(st=>{ if(st.company) names.add(st.company); });
+      try{ (JSON.parse(localStorage.getItem('safetytop_recent_companies')||'[]')||[]).forEach(n=>{ if(n) names.add(n); }); }catch(e){}
+      $('sn-company-list').innerHTML = [...names].sort().map(n=>`<option value="${escapeHTML(n)}"></option>`).join('');
+    }
+  }
+  $('sn-role').addEventListener('change', updateStaffCompanyField);
   $('staff-page-add').addEventListener('click', ()=>{
     staffEditId = null;
     $('sn-name').value = '';
+    $('sn-company').value = '';
     $('sn-role').value = '관리감독자';
+    updateStaffCompanyField();
     $('sn-error').style.display='none'; staffNameBackdrop.classList.add('show');
     setTimeout(()=>$('sn-name').focus(), 50);
   });
@@ -3389,13 +3434,20 @@ const db = getFirestore(fbApp);
   $('sn-save').addEventListener('click', async ()=>{
     const name = $('sn-name').value.trim();
     const role = $('sn-role').value;
-    if(!name) return;
+    const company = role === PARTNER_ROLE ? $('sn-company').value.trim() : '';
+    if(!name){ $('sn-name').focus(); return; }
+    if(role === PARTNER_ROLE && !company){
+      $('sn-error').textContent = t('staff_company_required');
+      $('sn-error').style.display = 'block';
+      $('sn-company').focus();
+      return;
+    }
     $('sn-error').style.display = 'none';
     try{
       if(staffEditId){
-        await updateDoc(doc(db,'staff',staffEditId), { name, role });
+        await updateDoc(doc(db,'staff',staffEditId), { name, role, company });
       } else {
-        await addDoc(collection(db,'staff'), { name, role, createdAt: Date.now() });
+        await addDoc(collection(db,'staff'), { name, role, company, createdAt: Date.now() });
       }
       staffNameBackdrop.classList.remove('show');
       staffEditId = null;
@@ -3433,7 +3485,7 @@ const db = getFirestore(fbApp);
       people.forEach(s=>{
         const row = document.createElement('div');
         row.className = 'zone-row';
-        row.innerHTML = `<span class="name">👷 ${escapeHTML(s.name)}</span>
+        row.innerHTML = `<span class="name">👷 ${escapeHTML(s.name)}${s.role === PARTNER_ROLE && s.company ? ` <span class="role-tag" style="font-weight:600;color:var(--text-dim);font-size:13px;">· ${escapeHTML(s.company)}</span>` : ''}</span>
           <span class="zone-actions">
             <button data-act="edit" title="${t('title_edit')}">✏️</button>
             <button data-act="delete" title="${t('title_delete')}">🗑️</button>
@@ -3442,6 +3494,8 @@ const db = getFirestore(fbApp);
           staffEditId = s.id;
           $('sn-name').value = s.name;
           $('sn-role').value = s.role || '관리감독자';
+          $('sn-company').value = s.company || '';
+          updateStaffCompanyField();
           $('sn-error').style.display='none'; staffNameBackdrop.classList.add('show');
           setTimeout(()=>$('sn-name').focus(), 50);
         });
@@ -3703,15 +3757,28 @@ const db = getFirestore(fbApp);
     const sel = $('f-staff-select');
     if(!sel) return;
     const allowedRoles = STAFF_CHECKLIST_ROLE_GROUPS[staffChecklistRoleGroup] || [];
-    const group = staffList.filter(s=>allowedRoles.includes(s.role));
+    let group = staffList.filter(s=>allowedRoles.includes(s.role));
+    // 협력업체 관리감독자 탭: 위에서 업체명을 입력했으면 그 업체 소속만 보여준다
+    const hintEl = $('partner-filter-hint');
+    const formCompany = ($('f-company') && $('f-company').value.trim()) || '';
+    let partnerFiltered = false;
+    if(staffChecklistRoleGroup === 'partner'){
+      if(formCompany){
+        const key = normCompany(formCompany);
+        group = group.filter(s=> normCompany(s.company) === key);
+        partnerFiltered = true;
+        if(hintEl){ hintEl.textContent = t('partner_filter_hint_txt').replace('{c}', formCompany); hintEl.style.display = 'block'; }
+      } else if(hintEl){ hintEl.textContent = t('partner_company_first'); hintEl.style.display = 'block'; }
+    } else if(hintEl){ hintEl.style.display = 'none'; }
     const candidates = group.filter(s=>!staffChecklistSelected.has(s.name));
     let placeholder;
-    if(group.length === 0) placeholder = t('staff_group_empty');
+    if(group.length === 0) placeholder = partnerFiltered ? t('partner_none_for_company') : t('staff_group_empty');
     else if(candidates.length === 0) placeholder = t('staff_all_selected');
     else placeholder = t('staff_select_ph');
     let html = `<option value="">${escapeHTML(placeholder)}</option>`;
     candidates.forEach(s=>{
-      html += `<option value="${escapeHTML(s.name)}">${escapeHTML(s.name)} · ${escapeHTML(roleLabel(s.role||''))}</option>`;
+      const sub = (s.role === PARTNER_ROLE && s.company) ? s.company : roleLabel(s.role||'');
+      html += `<option value="${escapeHTML(s.name)}">${escapeHTML(s.name)} · ${escapeHTML(sub)}</option>`;
     });
     sel.innerHTML = html;
     sel.value = '';
@@ -3735,7 +3802,7 @@ const db = getFirestore(fbApp);
     } else {
       wrap.innerHTML = [...staffChecklistSelected].map(name=>{
         const staffObj = staffList.find(s=>s.name===name);
-        const roleTxt = staffObj ? roleLabel(staffObj.role||'') : '';
+        const roleTxt = staffObj ? ((staffObj.role === PARTNER_ROLE && staffObj.company) ? `${roleLabel(staffObj.role)} · ${staffObj.company}` : roleLabel(staffObj.role||'')) : '';
         return `<span class="staff-chip checked">${escapeHTML(name)}`
           + (roleTxt ? ` <span class="role-tag">${escapeHTML(roleTxt)}</span>` : '')
           + `<button type="button" class="area-chip-remove" data-name="${escapeHTML(name)}" aria-label="remove">×</button></span>`;
@@ -4748,6 +4815,9 @@ const db = getFirestore(fbApp);
     }
   }
   $('f-company').addEventListener('blur', checkCompanyImportHint);
+  // 업체명을 바꾸면 협력업체 관리감독자 목록도 그 업체 기준으로 다시 그림
+  $('f-company').addEventListener('input', ()=>{ if(typeof populateStaffSelect === 'function') populateStaffSelect(); });
+  $('f-company').addEventListener('change', ()=>{ if(typeof populateStaffSelect === 'function') populateStaffSelect(); });
 
   // ---------------- status page (browse today's works, grouped by company) ----------------
   let statusSearch = '';
