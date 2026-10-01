@@ -22,7 +22,7 @@
     --border: #E5E7EB;
     --text: #1A1D23;
     --text-muted: #6B7280;
-    --text-dim: #9CA3AF;
+    --text-dim: #7A8290; /* 햇빛 아래에서도 읽히도록 조금 진하게 (예전 #9CA3AF) */
     --high: #E5484D;
     --high-bg: #FCE9E9;
     --mid: #E8930C;
@@ -107,7 +107,7 @@
   .weather-alert.cold{ background:#E0F2FE; color:#075985; }
   .weather-alert.cold.warning{ background:#DBEAFE; color:#1E3A8A; }
   .weather-alert.forecast{ opacity:0.92; }
-  @media (max-width:820px){
+  @media (max-width:820px), (max-height:500px){
     .weather-alert{ padding:10px 14px; font-size:13px; }
     .weather-alert .wa-title{ font-size:14px; }
   }
@@ -173,6 +173,11 @@
     flex:1; min-height:0; display:grid;
     grid-template-columns:27% 1fr; grid-template-rows:auto 1fr auto auto auto;
     grid-template-areas:"search search" "sidebar map" "sidebar legend" "sidebar stats" "sidebar equip";
+  }
+  @media (min-width:821px) and (min-height:501px){
+    .main{ min-height:640px; }
+    .map-wrap{ min-height:300px; }
+    #dayclose-row .btn{ width:auto !important; padding-left:22px; padding-right:22px; }
   }
   .dash-search-bar{
     grid-area:search; display:flex; gap:8px; padding:10px 16px;
@@ -244,7 +249,7 @@
   }
   .pin.has-warn::before{
     content:""; position:absolute; inset:calc(var(--pin-size,56px) * -0.14); border-radius:50%; border:3px solid var(--high);
-    animation:pulse 1.8s ease-out infinite;
+    animation:pulse 1.8s ease-out infinite; pointer-events:none; /* 깜빡이는 테두리가 옆 핀을 가려 못 누르게 되지 않도록 */
   }
   @keyframes pulse{ 0%{ transform:scale(0.85); opacity:0.9; } 100%{ transform:scale(1.6); opacity:0; } }
   .pin-label{
@@ -254,6 +259,9 @@
     pointer-events:none; opacity:0; transition:opacity .12s;
   }
   .pin:hover .pin-label{ opacity:1; }
+  /* 너무 많이 겹친 작업은 "N건" 묶음 핀 하나로 보여주고, 누르면 목록이 뜬다 */
+  .pin.pin-cluster .pin-circle{ background:#1F2937 !important; border-color:#fff; font-size:calc(var(--pin-size) * 0.36); }
+  .pin.pin-cluster .pin-circle{ box-shadow:0 0 0 3px rgba(31,41,55,0.25), 0 2px 6px rgba(0,0,0,0.3); }
 
   /* empty zone marker (no work today) */
   .zone-dot{
@@ -342,6 +350,47 @@
     align-items:center; justify-content:center; z-index:100; padding:20px;
   }
   .modal-backdrop.show{ display:flex; }
+  /* 공지사항: 앱을 열면 다른 창보다 위에 뜬다 */
+  #notice-popup-backdrop{ z-index:150; }
+  #notice-popup-backdrop .notice-popup{ max-width:420px; padding:0; overflow:hidden; display:flex; flex-direction:column; max-height:min(80vh,620px); }
+  .notice-popup-head{ background:var(--accent); color:#fff; padding:14px 18px; font-size:15px; font-weight:800; display:flex; align-items:center; gap:8px; }
+  .notice-popup-body{ padding:18px; overflow-y:auto; }
+  .notice-popup-title{ font-size:18px; font-weight:800; color:var(--text); margin:0 0 10px; line-height:1.4; word-break:keep-all; }
+  .notice-popup-text{ font-size:15.5px; line-height:1.65; color:var(--text); white-space:pre-wrap; word-break:break-word; }
+  .notice-popup-meta{ margin-top:14px; font-size:13px; color:var(--text-dim); }
+  .notice-popup-foot{ display:flex; border-top:1px solid var(--border); }
+  .notice-popup-foot button{ flex:1; min-height:50px; border:0; background:none; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; color:var(--text-muted); }
+  .notice-popup-foot button + button{ border-left:1px solid var(--border); }
+  .notice-popup-foot button.primary{ color:var(--accent); }
+  .notice-header-btn{ border:1px solid var(--border); background:var(--surface,#fff); border-radius:10px; min-height:36px; min-width:38px; padding:0 8px; font-size:17px; cursor:pointer; display:none; align-items:center; justify-content:center; }
+  .notice-header-btn.show{ display:inline-flex; }
+  .notice-state{ font-size:13.5px; font-weight:700; padding:8px 10px; border-radius:10px; margin-bottom:12px; }
+  .notice-state.on{ background:var(--low-bg); color:var(--low); }
+  .notice-state.off{ background:#F1F3F5; color:var(--text-muted); }
+  .notice-period{ display:flex; align-items:center; gap:6px; }
+  .notice-period input{ flex:1; min-width:0; }
+  /* 위치 이름 입력창은 위치 관리 목록 창 위에 떠야 한다(같은 z-index라 뒤로 숨던 문제) */
+  #zone-name-backdrop{ z-index:120; }
+  /* 화면 아래 알림(저장 완료/실패 등) */
+  .toast{
+    position:fixed; left:16px; right:16px; margin:0 auto; width:fit-content; bottom:96px; transform:translateY(20px);
+    background:#1F2937; color:#fff; padding:12px 18px; border-radius:12px; font-size:15px; font-weight:600;
+    box-shadow:0 8px 24px rgba(0,0,0,0.25); z-index:5000; opacity:0; pointer-events:none;
+    transition:opacity .2s, transform .2s; max-width:calc(100vw - 32px); text-align:center; line-height:1.45;
+  }
+  .toast.show{ opacity:1; transform:translateY(0); }
+  .toast.error{ background:#B42318; }
+  /* 지난/미래 날짜를 보고 있을 때 알림 줄 */
+  .past-date-banner{
+    flex:none; display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;
+    background:#FFF7E6; color:#92400E; border-bottom:1px solid #F5D9A8; padding:8px 14px; font-size:14px; font-weight:700;
+  }
+  .past-date-banner button{ background:#92400E; color:#fff; border:none; border-radius:8px; padding:7px 14px; font-size:14px; font-weight:800; min-height:36px; }
+  /* 작업등록 화면 상단: 어느 날짜로 등록되는지 */
+  .form-date-banner{ margin:-6px 0 16px; padding:9px 12px; border-radius:9px; background:var(--accent-bg); color:var(--accent); font-size:14px; font-weight:700; }
+  .form-date-banner.warn{ background:#FFF7E6; color:#92400E; border:1px solid #F5D9A8; }
+  .filter-active-chip{ background:var(--accent-bg); color:var(--accent); border:none; border-radius:14px; padding:3px 10px; font-size:13px; font-weight:700; cursor:pointer; }
+  .mini-link-btn{ background:none; border:1px solid var(--border); border-radius:8px; padding:5px 10px; font-size:13px; font-weight:700; color:var(--text-muted); cursor:pointer; }
   .modal{
     background:var(--panel); border:1px solid var(--border); border-radius:14px;
     width:100%; max-width:400px; padding:22px; max-height:90vh; overflow-y:auto; position:relative;
@@ -353,7 +402,7 @@
   /* PIN칸: 비밀번호 칸(type=password)으로 두면 크롬 비밀번호 관리자가 현장명을 '아이디'로 저장했다가
      다른 입력칸(검색창 등)에 자동으로 채워 넣는다. 일반 텍스트칸 + 점 표시로 바꿈 */
   .pin-mask{ -webkit-text-security:disc; text-security:disc; }
-  .field input[type=text], .field input[type=number], .field input[type=time], .field input[type=password], .field textarea, .field select{
+  .field input[type=text], .field input[type=number], .field input[type=time], .field input[type=date], .field input[type=password], .field textarea, .field select{
     width:100%; background:var(--panel-2); border:1.5px solid var(--border); border-radius:8px;
     padding:12px 13px; color:var(--text); font-size:16px;
   }
@@ -410,7 +459,7 @@
   .field-invalid > label{ color:var(--high); }
 
   /* zone manage list */
-  .zone-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:14px; max-height:240px; overflow-y:auto; }
+  .zone-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:14px; max-height:min(55vh, 460px); overflow-y:auto; }
   .zone-row{
     display:flex; align-items:center; justify-content:space-between; gap:8px;
     background:var(--panel-2); border:1px solid var(--border); border-radius:9px; padding:11px 13px;
@@ -453,8 +502,9 @@
   .st-chip-row{ margin-bottom:10px; }
   .st-table{
     --st-cols: 108px 150px minmax(180px,2.2fr) minmax(100px,1fr) 52px 118px minmax(110px,1.1fr) 72px 44px;
-    border:1px solid var(--border); border-radius:12px; overflow:hidden; background:var(--panel);
+    border:1px solid var(--border); border-radius:12px; overflow-x:auto; overflow-y:hidden; background:var(--panel);
   }
+  .st-table .st-head, .st-table .st-row{ min-width:980px; }
   .st-table.bulk{ --st-cols: 34px 108px 150px minmax(180px,2.2fr) minmax(100px,1fr) 52px 118px minmax(110px,1.1fr) 72px; }
   .st-head, .st-row{ display:grid; grid-template-columns:var(--st-cols); align-items:start; column-gap:12px; padding:0 14px 0 10px; }
   .st-head{ background:var(--panel-2); font-size:12.5px; font-weight:700; color:var(--text-muted); padding-top:10px; padding-bottom:10px; border-bottom:1px solid var(--border); }
@@ -493,7 +543,7 @@
   .st-mlabel{ display:none; }
 
   /* 휴대폰: 표 대신 한 작업씩 카드처럼 쌓아서 보여준다 */
-  @media (max-width:820px){
+  @media (max-width:820px), (max-height:500px){
     .st-head{ display:none; }
     .st-table, .st-table.bulk{ border:none; background:none; border-radius:0; overflow:visible; }
     .st-row{
@@ -642,11 +692,12 @@
   .report-type-tab.active[data-type="near_miss"]{ background:#FFF4E5; border-color:#EA580C; color:#9A3412; }
   .near-miss-count{ font-size:13px; font-weight:700; color:var(--text-dim); }
   .photo-lightbox{
-    position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:3000;
+    position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:6000;
     display:none; align-items:center; justify-content:center; padding:16px; cursor:zoom-out;
   }
   .photo-lightbox.show{ display:flex; }
   .photo-lightbox img{ max-width:100%; max-height:100%; border-radius:8px; }
+  .photo-lightbox-close{ position:absolute; top:14px; right:14px; width:46px; height:46px; border-radius:50%; border:none; background:rgba(255,255,255,0.92); font-size:22px; font-weight:800; cursor:pointer; }
 
   /* ---------- Management panel ---------- */
   .mgmt-actions{ display:flex; flex-direction:column; gap:9px; }
@@ -671,7 +722,7 @@
   .upload-status.show{ display:block; }
   .upload-status.error{ border-color:var(--high); color:var(--high); }
 
-  @media (max-width:820px){
+  @media (max-width:820px), (max-height:500px){
     .main{
       display:grid; grid-template-columns:1fr; grid-template-rows:auto auto auto auto auto auto;
       grid-template-areas:"search" "map" "legend" "stats" "equip" "sidebar";
@@ -705,7 +756,17 @@
     .stat-card{ padding:9px 8px; }
     .header{ padding:12px 14px; gap:10px; }
     .header-right{ gap:8px; }
-    .lang-switch .lang-btn{ min-height:34px; min-width:32px; padding-left:6px; padding-right:6px; }
+    .lang-switch .lang-btn{ min-height:36px; min-width:34px; padding-left:6px; padding-right:6px; }
+    .st-table .st-head, .st-table .st-row{ min-width:0; }
+    .date-nav button{ width:40px; height:40px; }
+    .equip-chip .equip-qty-btn{ width:34px !important; height:34px !important; font-size:18px !important; }
+    .area-chip-remove{ min-width:34px; min-height:34px; font-size:19px; }
+    .st-copy-btn{ width:44px; height:40px; font-size:17px; }
+    #area-draw-done{ padding:10px 22px !important; font-size:16px !important; }
+    #area-draw-cancel, #place-hint-cancel{ padding:10px 14px !important; font-size:16px !important; }
+    /* 입력 중(키보드가 올라온 상태)에는 하단 탭바를 숨겨 입력칸을 가리지 않게 */
+    body.kbd-open .bottom-tabbar{ display:none; }
+    body.kbd-open .page-view{ bottom:0; }
     /* 휴대폰은 지도 높이가 낮아서 안내창이 지도 위를 덮으면 그릴 곳이 거의 안 남는다.
        안내창(완료/취소)을 화면 아래(탭바 바로 위)에 띄워 지도 전체를 쓸 수 있게 한다. */
     .place-hint{ position:fixed; top:auto; left:12px; right:12px; bottom:88px; z-index:60; box-shadow:0 6px 20px rgba(0,0,0,0.18); }
@@ -753,6 +814,7 @@
         <input type="date" id="date-picker" autocomplete="off">
         <button id="next-day">›</button>
       </div>
+      <button type="button" class="notice-header-btn" id="notice-header-btn" data-i18n-title="notice_header_btn" title="공지사항">📢</button>
       <div class="lang-switch" id="lang-switch">
         <button type="button" class="lang-btn" data-lang="ko">한</button>
         <button type="button" class="lang-btn" data-lang="zh">中</button>
@@ -763,6 +825,7 @@
   </div>
 
   <div class="weather-alert" id="weather-alert" style="display:none;"></div>
+  <div class="past-date-banner" id="past-date-banner" style="display:none;"><span id="past-date-text"></span><button type="button" id="past-date-today" data-i18n="go_today_btn">오늘로 이동</button></div>
 
   <div class="main">
     <div class="dash-search-bar" id="dash-search-bar">
@@ -837,6 +900,7 @@
         <h2 id="modal-title">위험작업 등록</h2>
         <button type="button" class="btn" id="import-work-btn" style="margin-left:auto; white-space:nowrap;" data-i18n="import_work_btn">📥 가져오기</button>
       </div>
+      <div class="form-date-banner" id="work-form-date"></div>
 
       <div class="field">
         <label><span data-i18n="label_company">업체 / 팀명</span> <span class="req-mark">*</span></label>
@@ -846,7 +910,7 @@
 
       <div class="field">
         <label><span data-i18n="label_people">투입 인원</span> <span class="req-mark">*</span></label>
-        <input type="number" id="f-people" min="1" placeholder="0">
+        <input type="number" id="f-people" min="1" step="1" inputmode="numeric" placeholder="예: 5" data-i18n-placeholder="people_ph">
       </div>
 
       <div class="field">
@@ -902,13 +966,13 @@
 
       <div class="field">
         <label><span data-i18n="label_vulnerable">취약근로자</span> <span class="req-mark">*</span></label>
-        <input type="number" id="f-vulnerable" min="0" placeholder="0">
+        <input type="number" id="f-vulnerable" min="0" step="1" inputmode="numeric" placeholder="없으면 0" data-i18n-placeholder="vulnerable_ph">
         <div class="hint-text" style="margin-top:5px;" data-i18n="vulnerable_hint">고령자, 기저질환자 등</div>
       </div>
 
       <div class="field-row">
-        <div class="field"><label><span data-i18n="label_time_start">시작 시간</span> <span class="req-mark">*</span></label><input type="text" id="f-time-start" inputmode="numeric" placeholder="예: 09:00" maxlength="5" autocomplete="off"></div>
-        <div class="field"><label><span data-i18n="label_time_end">종료 시간</span> <span class="req-mark">*</span></label><input type="text" id="f-time-end" inputmode="numeric" placeholder="예: 18:00" maxlength="5" autocomplete="off"></div>
+        <div class="field"><label><span data-i18n="label_time_start">시작 시간</span> <span class="req-mark">*</span></label><input type="text" id="f-time-start" inputmode="numeric" placeholder="예: 09:00" data-i18n-placeholder="time_start_ph" maxlength="5" autocomplete="off"></div>
+        <div class="field"><label><span data-i18n="label_time_end">종료 시간</span> <span class="req-mark">*</span></label><input type="text" id="f-time-end" inputmode="numeric" placeholder="예: 18:00" data-i18n-placeholder="time_end_ph" maxlength="5" autocomplete="off"></div>
       </div>
 
       <div class="field">
@@ -1073,7 +1137,8 @@
   </div>
 
 <!-- 신고 사진 크게 보기 -->
-<div class="photo-lightbox" id="photo-lightbox"><img id="photo-lightbox-img" alt=""></div>
+<div class="photo-lightbox" id="photo-lightbox"><button type="button" class="photo-lightbox-close" aria-label="close">✕</button><img id="photo-lightbox-img" alt=""></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 </div>
 
@@ -1112,6 +1177,42 @@
     <div class="field"><label data-i18n="label_name">이름</label><input type="text" id="zn-name" placeholder="예: A동 3층, 타워크레인 구역" data-i18n-placeholder="zone_name_ph"></div>
     <div class="modal-actions">
       <button class="btn primary" id="zn-save" style="width:100%;" data-i18n="save_btn">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 공지사항 팝업 (모든 사용자) -->
+<div class="modal-backdrop" id="notice-popup-backdrop">
+  <div class="modal notice-popup" role="dialog" aria-modal="true">
+    <div class="notice-popup-head">📢 <span data-i18n="notice_popup_head">공지사항</span></div>
+    <div class="notice-popup-body">
+      <h3 class="notice-popup-title" id="notice-popup-title"></h3>
+      <div class="notice-popup-text" id="notice-popup-text"></div>
+      <div class="notice-popup-meta" id="notice-popup-meta"></div>
+    </div>
+    <div class="notice-popup-foot">
+      <button type="button" id="notice-hide-today" data-i18n="notice_hide_today">오늘 하루 보지 않기</button>
+      <button type="button" class="primary" id="notice-close" data-i18n="notice_close">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- 공지사항 관리 (관리자) -->
+<div class="modal-backdrop" id="notice-edit-backdrop">
+  <div class="modal" style="max-width:440px;">
+    <button class="btn modal-close-x" id="notice-edit-close">✕</button>
+    <h3 data-i18n="notice_edit_title">📢 공지사항 관리</h3>
+    <div class="notice-state off" id="notice-edit-state"></div>
+    <div class="field"><label><span data-i18n="notice_label_title">제목</span> <span class="req-mark">*</span></label><input type="text" id="notice-title" maxlength="60" autocomplete="off" data-i18n-placeholder="notice_title_ph" placeholder="예: 내일 오전 타워크레인 정기점검"></div>
+    <div class="field"><label><span data-i18n="notice_label_body">내용</span> <span class="req-mark">*</span></label><textarea id="notice-body" rows="6" maxlength="1000" data-i18n-placeholder="notice_body_ph" placeholder="근로자에게 알릴 내용을 입력하세요"></textarea></div>
+    <div class="field"><label data-i18n="notice_label_period">게시 기간 (선택)</label>
+      <div class="notice-period"><input type="date" id="notice-start" autocomplete="off"><span>~</span><input type="date" id="notice-end" autocomplete="off"></div>
+      <div class="hint-text" data-i18n="notice_period_hint">비워두면 '공지 내리기'를 누를 때까지 계속 표시됩니다.</div>
+    </div>
+    <div class="hint-text" id="notice-edit-error" style="display:none; color:var(--high);"></div>
+    <div class="modal-actions" style="flex-direction:column; gap:8px;">
+      <button class="btn primary" id="notice-save" style="width:100%; justify-content:center;" data-i18n="notice_save_btn">게시하기</button>
+      <button class="btn danger" id="notice-off" style="width:100%; justify-content:center; display:none;" data-i18n="notice_off_btn">공지 내리기</button>
     </div>
   </div>
 </div>
@@ -1179,7 +1280,11 @@
     </div>
 
     <div class="field">
-      <label data-i18n="dash_filter_company_label">업체</label>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <label data-i18n="dash_filter_company_label" style="margin:0;">업체</label>
+        <button type="button" class="mini-link-btn" id="dash-filter-company-all" data-i18n="filter_select_all" style="margin-left:auto;">모두 선택</button>
+        <button type="button" class="mini-link-btn" id="dash-filter-company-none" data-i18n="filter_select_none">모두 해제</button>
+      </div>
       <div class="staff-check-list" id="dash-filter-company-list"></div>
       <div class="hint-text" id="dash-filter-company-empty" style="display:none;" data-i18n="dash_filter_company_empty">오늘 등록된 업체가 없습니다.</div>
     </div>
@@ -1268,6 +1373,7 @@
     <h3 data-i18n="manage_panel_title">🔧 관리자 패널</h3>
     <div class="mgmt-actions">
       <button class="btn" id="mp-upload-map" data-i18n="mp_upload_map">🛰️&nbsp; 지도 업로드 / 교체</button>
+      <button class="btn" id="mp-notice" data-i18n="mp_notice">📢&nbsp; 공지사항 관리</button>
       <button class="btn" id="mp-manage-zones" data-i18n="mp_manage_zones">📍&nbsp; 위치(구역) 관리</button>
       <button class="btn" id="mp-manage-staff" data-i18n="mp_manage_staff">👷&nbsp; 담당자 관리</button>
       <button class="btn" id="mp-excel-import" data-i18n="mp_excel_import">📊&nbsp; 엑셀로 작업 일괄 등록</button>
@@ -1385,6 +1491,45 @@ const db = getFirestore(fbApp);
       stat_low: "저위험 건수",
       back: "← 뒤로",
       work_add_title: "위험작업 등록",
+    mp_notice: "📢\u00a0 공지사항 관리", notice_header_btn: "공지사항", notice_popup_head: "공지사항", notice_hide_today: "오늘 하루 보지 않기", notice_close: "확인",
+    notice_edit_title: "📢 공지사항 관리", notice_label_title: "제목", notice_label_body: "내용", notice_label_period: "게시 기간 (선택)",
+    notice_title_ph: "예: 내일 오전 타워크레인 정기점검", notice_body_ph: "근로자에게 알릴 내용을 입력하세요", notice_period_hint: "비워두면 '공지 내리기'를 누를 때까지 계속 표시됩니다.",
+    notice_save_btn: "게시하기", notice_update_btn: "수정해서 다시 게시", notice_off_btn: "공지 내리기", notice_state_on: "● 현재 게시 중", notice_state_off: "○ 게시 중인 공지가 없습니다",
+    notice_state_scheduled: "● 게시 예정 ({d}부터)", notice_state_expired: "○ 게시 기간이 끝났습니다",
+    notice_need_fields: "제목과 내용을 입력해주세요.", notice_bad_period: "끝나는 날짜가 시작 날짜보다 빠릅니다.", notice_saved: "공지사항이 게시되었습니다", notice_off_done: "공지를 내렸습니다",
+    notice_off_confirm: "공지를 내리면 근로자 화면에 더 이상 표시되지 않습니다. 내릴까요?", notice_posted: "게시", notice_until: "까지",
+    unit_count: "건", zone_dup_name: "같은 이름의 위치가 이미 있습니다. 다른 이름을 입력해주세요.", pin_cluster_label: "겹친 작업 · 눌러서 보기", pin_cluster_title: "이 자리의 작업 {n}건",
+      people_ph: "예: 5",
+      vulnerable_ph: "없으면 0",
+      export_lib_missing: "⚠ 엑셀 기능을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 새로고침 해주세요.",
+      go_today_btn: "오늘로 이동",
+      viewing_date: "📅 {d} 작업을 보고 있습니다",
+      form_date_today: "📅 오늘({d}) 작업으로 등록됩니다",
+      form_date_other: "⚠ 오늘이 아닌 {d} 작업으로 등록됩니다",
+      filter_select_all: "모두 선택",
+      filter_select_none: "모두 해제",
+      filter_active: "🔎 검색/필터 적용 중 · 해제",
+      not_on_map: "📍 지도 미표시 {n}건",
+      time_start_ph: "예: 09:00",
+      time_end_ph: "예: 18:00",
+      saved_ok: "✅ 저장되었습니다",
+      status_changed_ok: "✅ 상태가 변경되었습니다",
+      action_failed: "❌ 처리하지 못했습니다. 인터넷 연결을 확인하고 다시 시도해주세요.",
+      complete_confirm: "이 작업을 \"완료\"로 바꿀까요?",
+      reopen_confirm: "이 작업을 다시 \"진행중\"으로 바꿀까요?",
+      zone_delete_confirm: "\"{z}\" 위치를 삭제할까요?{w}",
+      zone_delete_works: "\n이 날짜에 이 위치를 쓰는 작업 {n}건은 지도에 표시되지 않게 됩니다.",
+      staff_delete_confirm: "\"{n}\" 담당자를 삭제할까요?",
+      staff_dup_name: "⚠ 같은 이름의 담당자가 이미 있습니다. 구분할 수 있게 이름을 다르게 입력해주세요. (예: 김철수B)",
+      err_time_format: "⚠ 시간은 08:00처럼 입력해주세요. (0~23시, 0~59분)",
+      time_overnight_confirm: "종료 시간이 시작 시간보다 빠릅니다.\n자정을 넘기는 야간작업이 맞나요?",
+      err_people_int: "⚠ 투입 인원은 1명 이상, 숫자로 입력해주세요.",
+      err_vulnerable_range: "⚠ 취약근로자는 0명 이상, 투입 인원보다 많을 수 없습니다.",
+      err_missing_list: "⚠ 다음 필수 항목을 입력해주세요: {list}",
+      leave_form_confirm: "작성 중인 내용이 저장되지 않았습니다. 나가시겠습니까?",
+      partner_removed: "업체가 바뀌어 다른 업체 관리감독자({n})를 목록에서 뺐습니다.",
+      zone_text_matched: "목록에 있는 위치라서 \"{z}\"(으)로 선택했습니다.",
+      day_works_empty: "이 날짜에 등록된 작업이 없습니다.",
       label_staff_company: "소속 업체",
       staff_company_ph: "예: 태흥건설 (작업등록의 업체명과 같게)",
       staff_company_required: "⚠ 협력업체 관리감독자는 소속 업체를 입력해주세요.",
@@ -1455,7 +1600,7 @@ const db = getFirestore(fbApp);
       equip_other: "기타(직접입력)",
       equip_select_ph: "+ 장비 추가",
       equip_summary_title: "🚜 장비현황",
-      equip_summary_empty: "오늘 등록된 장비가 없습니다.",
+      equip_summary_empty: "등록된 장비가 없습니다.",
       label_status: "작업 상태",
       label_people: "투입 인원",
       label_vulnerable: "취약근로자",
@@ -1556,7 +1701,7 @@ const db = getFirestore(fbApp);
       merge_running: (count)=>`⏳ ${count}건 병합 중...`,
       merge_success: (count)=>`✅ ${count}건이 병합되었습니다.`,
       merge_error: "병합 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
-      status_vulnerable_total: (n)=>`오늘 취약근로자 총 ${n}명`,
+      status_vulnerable_total: (n)=>`취약근로자 총 ${n}명`,
       report_title: "안전개선신고",
       report_intro: "현장의 위험한 상황이나 아차사고를 사진과 함께 신고해주세요. 신고 내용은 관리자만 확인합니다.",
       report_photo_label: "사진",
@@ -1689,6 +1834,45 @@ const db = getFirestore(fbApp);
       stat_low: "低风险件数",
       back: "← 返回",
       work_add_title: "登记危险作业",
+    mp_notice: "📢\u00a0 公告管理", notice_header_btn: "公告", notice_popup_head: "公告", notice_hide_today: "今天不再显示", notice_close: "确认",
+    notice_edit_title: "📢 公告管理", notice_label_title: "标题", notice_label_body: "内容", notice_label_period: "发布期间（可选）",
+    notice_title_ph: "例：明天上午塔吊定期检查", notice_body_ph: "请输入要通知工人的内容", notice_period_hint: "留空则一直显示，直到点击“撤下公告”。",
+    notice_save_btn: "发布", notice_update_btn: "修改并重新发布", notice_off_btn: "撤下公告", notice_state_on: "● 正在发布", notice_state_off: "○ 当前没有公告",
+    notice_state_scheduled: "● 预定发布（{d}起）", notice_state_expired: "○ 发布期间已结束",
+    notice_need_fields: "请输入标题和内容。", notice_bad_period: "结束日期早于开始日期。", notice_saved: "公告已发布", notice_off_done: "公告已撤下",
+    notice_off_confirm: "撤下后工人将看不到此公告。确定撤下吗？", notice_posted: "发布", notice_until: "为止",
+    unit_count: "项", zone_dup_name: "已有同名位置，请输入其他名称。", pin_cluster_label: "重叠作业 · 点击查看", pin_cluster_title: "此处作业 {n} 项",
+      people_ph: "例：5",
+      vulnerable_ph: "没有填0",
+      export_lib_missing: "⚠ 无法加载Excel功能。请检查网络后刷新页面。",
+      go_today_btn: "回到今天",
+      viewing_date: "📅 正在查看 {d} 的作业",
+      form_date_today: "📅 将登记为今天（{d}）的作业",
+      form_date_other: "⚠ 将登记为 {d} 的作业（不是今天）",
+      filter_select_all: "全选",
+      filter_select_none: "全部取消",
+      filter_active: "🔎 已应用搜索/筛选 · 取消",
+      not_on_map: "📍 地图未显示 {n}件",
+      time_start_ph: "例：09:00",
+      time_end_ph: "例：18:00",
+      saved_ok: "✅ 已保存",
+      status_changed_ok: "✅ 状态已更改",
+      action_failed: "❌ 处理失败。请检查网络后重试。",
+      complete_confirm: "将此作业改为“已完成”吗？",
+      reopen_confirm: "将此作业改回“进行中”吗？",
+      zone_delete_confirm: "删除位置“{z}”吗？{w}",
+      zone_delete_works: "\n该日期使用此位置的 {n} 件作业将不再显示在地图上。",
+      staff_delete_confirm: "删除负责人“{n}”吗？",
+      staff_dup_name: "⚠ 已有同名负责人，请输入可区分的名字。",
+      err_time_format: "⚠ 时间请按 08:00 格式输入。",
+      time_overnight_confirm: "结束时间早于开始时间。\n是跨午夜的夜间作业吗？",
+      err_people_int: "⚠ 投入人数请输入1以上的数字。",
+      err_vulnerable_range: "⚠ 弱势劳动者须为0以上，且不能多于投入人数。",
+      err_missing_list: "⚠ 请填写以下必填项目：{list}",
+      leave_form_confirm: "正在填写的内容尚未保存。确定离开吗？",
+      partner_removed: "公司已变更，已移除其他公司的管理监督者（{n}）。",
+      zone_text_matched: "该位置已在列表中，已选择“{z}”。",
+      day_works_empty: "该日期没有登记的作业。",
       label_staff_company: "所属公司",
       staff_company_ph: "例：泰兴建设（与作业登记中的公司名称一致）",
       staff_company_required: "⚠ 协作公司管理监督者请填写所属公司。",
@@ -1759,7 +1943,7 @@ const db = getFirestore(fbApp);
       equip_other: "其他（直接输入）",
       equip_select_ph: "+ 添加设备",
       equip_summary_title: "🚜 设备现况",
-      equip_summary_empty: "今日没有登记的设备。",
+      equip_summary_empty: "没有登记的设备。",
       label_status: "作业状态",
       label_people: "投入人数",
       label_vulnerable: "弱势工人",
@@ -1860,7 +2044,7 @@ const db = getFirestore(fbApp);
       merge_running: (count)=>`⏳ 正在合并${count}件...`,
       merge_success: (count)=>`✅ 已合并${count}件。`,
       merge_error: "合并过程中发生错误,请稍后再试。",
-      status_vulnerable_total: (n)=>`今日弱势工人共 ${n}人`,
+      status_vulnerable_total: (n)=>`弱势工人共 ${n}人`,
       report_title: "安全改善举报",
       report_intro: "请拍照举报现场的危险情况或未遂事故。举报内容仅管理员可查看。",
       report_photo_label: "照片",
@@ -1993,6 +2177,45 @@ const db = getFirestore(fbApp);
       stat_low: "Low-risk count",
       back: "← Back",
       work_add_title: "Register hazardous work",
+    mp_notice: "📢\u00a0 Notice", notice_header_btn: "Notice", notice_popup_head: "Notice", notice_hide_today: "Don't show today", notice_close: "OK",
+    notice_edit_title: "📢 Manage notice", notice_label_title: "Title", notice_label_body: "Message", notice_label_period: "Display period (optional)",
+    notice_title_ph: "e.g. Tower crane inspection tomorrow morning", notice_body_ph: "Message for workers", notice_period_hint: "If empty, shown until you take it down.",
+    notice_save_btn: "Post", notice_update_btn: "Update and repost", notice_off_btn: "Take down", notice_state_on: "● Currently posted", notice_state_off: "○ No notice posted",
+    notice_state_scheduled: "● Scheduled (from {d})", notice_state_expired: "○ Display period has ended",
+    notice_need_fields: "Please enter a title and message.", notice_bad_period: "End date is before start date.", notice_saved: "Notice posted", notice_off_done: "Notice taken down",
+    notice_off_confirm: "Workers will no longer see this notice. Take it down?", notice_posted: "Posted", notice_until: "until",
+    unit_count: "", zone_dup_name: "A location with this name already exists.", pin_cluster_label: "Overlapping · tap to view", pin_cluster_title: "{n} works here",
+      people_ph: "e.g. 5",
+      vulnerable_ph: "0 if none",
+      export_lib_missing: "⚠ Could not load the Excel feature. Check your connection and reload the page.",
+      go_today_btn: "Go to today",
+      viewing_date: "📅 Viewing works for {d}",
+      form_date_today: "📅 Registering for today ({d})",
+      form_date_other: "⚠ Registering for {d} (not today)",
+      filter_select_all: "Select all",
+      filter_select_none: "Clear all",
+      filter_active: "🔎 Search/filter on · clear",
+      not_on_map: "📍 Not on map: {n}",
+      time_start_ph: "e.g. 09:00",
+      time_end_ph: "e.g. 18:00",
+      saved_ok: "✅ Saved",
+      status_changed_ok: "✅ Status changed",
+      action_failed: "❌ Could not complete. Check your connection and try again.",
+      complete_confirm: "Mark this work as \"Done\"?",
+      reopen_confirm: "Change this work back to \"In progress\"?",
+      zone_delete_confirm: "Delete location \"{z}\"?{w}",
+      zone_delete_works: "\n{n} work(s) on this date use this location and will no longer show on the map.",
+      staff_delete_confirm: "Delete staff \"{n}\"?",
+      staff_dup_name: "⚠ A staff member with this name already exists. Please use a distinguishable name.",
+      err_time_format: "⚠ Enter times like 08:00 (0-23 h, 0-59 min).",
+      time_overnight_confirm: "End time is earlier than start time.\nIs this overnight work?",
+      err_people_int: "⚠ Crew size must be a whole number of 1 or more.",
+      err_vulnerable_range: "⚠ Vulnerable workers must be 0 or more and not exceed the crew size.",
+      err_missing_list: "⚠ Please fill in: {list}",
+      leave_form_confirm: "Your entries are not saved. Leave anyway?",
+      partner_removed: "Company changed, so supervisors of another company ({n}) were removed.",
+      zone_text_matched: "That location is in the list, so \"{z}\" was selected.",
+      day_works_empty: "No works registered for this date.",
       label_staff_company: "Company",
       staff_company_ph: "e.g. Taeheung Construction (same as in work registration)",
       staff_company_required: "⚠ Please enter the company for a partner company supervisor.",
@@ -2063,7 +2286,7 @@ const db = getFirestore(fbApp);
       equip_other: "Other (custom)",
       equip_select_ph: "+ Add equipment",
       equip_summary_title: "🚜 Equipment status",
-      equip_summary_empty: "No equipment registered today.",
+      equip_summary_empty: "No equipment registered.",
       label_status: "Work status",
       label_people: "Workers assigned",
       label_vulnerable: "Vulnerable workers",
@@ -2164,7 +2387,7 @@ const db = getFirestore(fbApp);
       merge_running: (count)=>`⏳ Merging ${count} records...`,
       merge_success: (count)=>`✅ Merged ${count} records.`,
       merge_error: "An error occurred while merging. Please try again.",
-      status_vulnerable_total: (n)=>`Vulnerable workers today: ${n}`,
+      status_vulnerable_total: (n)=>`Vulnerable workers: ${n}`,
       report_title: "Safety Improvement Report",
       report_intro: "Report hazards or near-misses on site with a photo. Only admins can view submitted reports.",
       report_photo_label: "Photo",
@@ -2323,6 +2546,9 @@ const db = getFirestore(fbApp);
     safeCall(typeof renderWeatherAlert === 'function' ? renderWeatherAlert : null);
     safeCall(typeof renderWeatherWidget === 'function' ? renderWeatherWidget : null);
     safeCall(typeof updateWorkFormTitle === 'function' ? updateWorkFormTitle : null);
+    safeCall(typeof updateWorkFormDateBanner === 'function' ? updateWorkFormDateBanner : null);
+    safeCall(typeof renderEquipmentSummary === 'function' ? renderEquipmentSummary : null);
+    safeCall(typeof updatePastDateBanner === 'function' ? updatePastDateBanner : null);
     safeCall(typeof applyReportTypeUI === 'function' ? applyReportTypeUI : null);
     safeCall(typeof renderReportList === 'function' ? renderReportList : null);
   }
@@ -2437,6 +2663,15 @@ const db = getFirestore(fbApp);
       if(isAdmin) fileInput.click();
       return;
     }
+    if(workPage.style.display === 'block'){
+      if(!editingId) return; // 이미 작업등록 화면이면 입력한 내용을 지우지 않음
+      // 수정 중에 작업등록 탭을 누르면 새 작업 등록으로 전환(바꾼 내용이 있으면 확인)
+      if(workFormDirty && !confirm(t('leave_form_confirm'))) return;
+      workFormDirty = false;
+      openWorkModal(null, null);
+      return;
+    }
+    if(workFormDirty){ showWorkPage(); setActiveTab('add-work'); return; } // 작성 중이던 내용으로 돌아가기
     openWorkModal(null, null);
   });
   $('tab-status').addEventListener('click', ()=>{
@@ -2509,7 +2744,7 @@ const db = getFirestore(fbApp);
     companyMergeBackdrop.classList.add('show');
     populateMergeCompanyDatalist();
   });
-  $('company-merge-close').addEventListener('click', ()=> companyMergeBackdrop.classList.remove('show'));
+  $('company-merge-close').addEventListener('click', ()=>{ companyMergeBackdrop.classList.remove('show'); setActiveTab('dashboard'); });
   companyMergeBackdrop.addEventListener('click', (e)=>{ if(e.target===companyMergeBackdrop) companyMergeBackdrop.classList.remove('show'); });
 
   $('merge-execute-btn').addEventListener('click', async ()=>{
@@ -2521,13 +2756,15 @@ const db = getFirestore(fbApp);
     showMergeStatus(t('merge_loading'), false);
     let matchSnap;
     try{
-      matchSnap = await getDocs(query(collection(db, 'works'), where('company', '==', fromName)));
+      // 띄어쓰기·(주) 차이까지 같은 업체로 보고 찾는다 (예: "태흥 건설" = "태흥건설")
+      matchSnap = await getDocs(collection(db, 'works'));
     }catch(e){
       console.error('merge lookup failed', e);
       showMergeStatus(t('merge_error'), true);
       return;
     }
-    const ids = matchSnap.docs.map(d=>d.id);
+    const fromKey = normCompany(fromName);
+    const ids = matchSnap.docs.filter(d=>{ const c = (d.data().company || '').trim(); return c && c !== toName && normCompany(c) === fromKey; }).map(d=>d.id);
     if(ids.length === 0){ showMergeStatus(t('merge_not_found')(fromName), true); return; }
 
     const ok = confirm(t('merge_confirm')(fromName, toName, ids.length));
@@ -2536,6 +2773,9 @@ const db = getFirestore(fbApp);
     showMergeStatus(t('merge_running')(ids.length), false);
     try{
       await Promise.all(ids.map(id => updateDoc(doc(db, 'works', id), { company: toName })));
+      // 협력업체 관리감독자의 소속 업체도 같이 바꿔준다
+      const staffToFix = staffList.filter(st=> st.company && st.company !== toName && normCompany(st.company) === fromKey);
+      await Promise.all(staffToFix.map(st => updateDoc(doc(db, 'staff', st.id), { company: toName })));
       // 하루 마감과 같은 이유로, 오늘(현재 보고 있는 날짜)의 markers 중에
       // 이번에 병합된 항목이 있다면 리스너를 기다리지 않고 바로 업체명을
       // 바꿔서 아래 렌더가 즉시 새 이름/색으로 보이게 한다.
@@ -2748,16 +2988,16 @@ const db = getFirestore(fbApp);
   // 시작/종료 시간: 클릭해서 초점을 준 뒤 숫자를 그대로 타이핑하면 자동으로 "09:00" 형태로 맞춰준다.
   function attachTimeMask(input){
     if(!input) return;
+    // 숫자 4개를 치면 자동으로 "09:30"처럼 콜론을 넣고, 칸을 벗어나면 "9", "930", "9시" 같은
+    // 흔한 입력도 "09:00"/"09:30" 형식으로 맞춘다. (예전에는 "900"이 "90:0"으로 바뀌는 문제가 있었음)
+    // 25:00처럼 잘못된 시간은 몰래 고치지 않고 그대로 둬서 저장할 때 안내가 나오게 한다.
     input.addEventListener('input', ()=>{
-      let digits = input.value.replace(/[^0-9]/g, '').slice(0, 4);
-      input.value = digits.length >= 3 ? (digits.slice(0,2) + ':' + digits.slice(2)) : digits;
+      const v = input.value;
+      if(/^\d{4}$/.test(v)) input.value = v.slice(0,2) + ':' + v.slice(2);
     });
     input.addEventListener('blur', ()=>{
-      const match = input.value.trim().match(/^(\d{1,2}):?(\d{2})$/);
-      if(!match) return;
-      const hh = String(Math.min(23, parseInt(match[1], 10))).padStart(2, '0');
-      const mm = String(Math.min(59, parseInt(match[2], 10))).padStart(2, '0');
-      input.value = hh + ':' + mm;
+      const n = normalizeTimeStr(input.value);
+      if(n) input.value = n;
     });
   }
   attachTimeMask($('f-time-start'));
@@ -2779,6 +3019,38 @@ const db = getFirestore(fbApp);
   // 데이터베이스에서 받은 작업을 화면에 그리기 전에 형식을 정리한다.
   // 숫자칸은 숫자로, 위험도/상태는 정해진 값으로, 시간은 숫자·":"·"~"만 남긴다.
   // (보안 규칙이 열려 있어 누군가 이상한 값을 직접 넣어도 화면에서 스크립트가 실행되지 않게)
+  // 화면 아래에 잠깐 뜨는 알림 (저장 완료 / 실패 등)
+  let toastTimer = null;
+  function showToast(msg, isError){
+    const el = document.getElementById('toast');
+    if(!el) return;
+    el.textContent = msg;
+    el.classList.toggle('error', !!isError);
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=> el.classList.remove('show'), isError ? 4500 : 2200);
+  }
+  // "9", "900", "0930", "9:30", "9시", "9시30분" → "09:00"/"09:30" 형식으로 맞춤. 잘못된 값이면 null
+  function normalizeTimeStr(v){
+    v = String(v || '').trim().replace(/\s+/g, '');
+    if(!v) return null;
+    let h, mi;
+    const m = v.match(/^(\d{1,2})(?:시|:|h)(\d{1,2})?(?:분)?$/i);
+    if(m){ h = +m[1]; mi = m[2] !== undefined ? +m[2] : 0; }
+    else if(/^\d{1,4}$/.test(v)){
+      if(v.length <= 2){ h = +v; mi = 0; }
+      else if(v.length === 3){ h = +v[0]; mi = +v.slice(1); }
+      else { h = +v.slice(0,2); mi = +v.slice(2); }
+    } else return null;
+    if(h > 23 || mi > 59) return null;
+    return String(h).padStart(2,'0') + ':' + String(mi).padStart(2,'0');
+  }
+  function fmtShortDate(iso){
+    const d = new Date(iso + 'T00:00:00');
+    if(isNaN(d)) return iso;
+    const wd = { ko:['일','월','화','수','목','금','토'], zh:['日','一','二','三','四','五','六'], en:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] }[LANG] || ['일','월','화','수','목','금','토'];
+    return `${d.getMonth()+1}/${d.getDate()}(${wd[d.getDay()]})`;
+  }
   // 작업의 위치 이름: 등록된 위치(지도 핀)면 그 이름, 직접 입력한 위치면 그 글자
   function workLocName(m){
     const z = m && m.zoneId ? zones.find(z=>z.id===m.zoneId) : null;
@@ -2801,6 +3073,7 @@ const db = getFirestore(fbApp);
     const q = query(collection(db, 'works'), where('date', '==', date));
     unsubWorks = onSnapshot(q, (snap)=>{
       markers = snap.docs.map(d=> sanitizeWork({ id: d.id, ...d.data() }));
+      rebuildCompanyColors();
       renderAllPins();
       renderSidebar();
       renderFullWorkList();
@@ -2872,8 +3145,16 @@ const db = getFirestore(fbApp);
   // 구조라서). 그래서 어느 쪽에서 날짜를 바꾸든 항상 이 함수 하나를 거쳐서
   // currentDate 갱신 + 양쪽 입력창 동기화 + 재구독까지 한 번에 처리한다.
   const statusDatePicker = $('status-date-picker');
+  function updatePastDateBanner(){
+    const el = $('past-date-banner');
+    if(!el) return;
+    const isToday = currentDate === todayStr();
+    el.style.display = isToday ? 'none' : 'flex';
+    if(!isToday) $('past-date-text').textContent = t('viewing_date').replace('{d}', fmtShortDate(currentDate));
+  }
   function setCurrentDate(newDate){
     currentDate = newDate || todayStr();
+    updatePastDateBanner();
     datePicker.value = currentDate;
     if(statusDatePicker) statusDatePicker.value = currentDate;
     subscribeWorks(currentDate);
@@ -2883,6 +3164,7 @@ const db = getFirestore(fbApp);
     d.setDate(d.getDate() + deltaDays);
     setCurrentDate(toISO(d));
   }
+  $('past-date-today').addEventListener('click', ()=> setCurrentDate(todayStr()));
   datePicker.addEventListener('change', ()=>{
     // 사용자가 직접 고른 날짜만 반영(브라우저가 예전 값을 채워 넣은 경우는 무시)
     if(typeof isUserEdit === 'function' && !isUserEdit(datePicker)){ datePicker.value = currentDate; return; }
@@ -3019,7 +3301,7 @@ const db = getFirestore(fbApp);
   }
 
   let mapImageRatio = null; // naturalWidth / naturalHeight of the current map image
-  const mobileLayoutQuery = window.matchMedia('(max-width:820px)');
+  const mobileLayoutQuery = window.matchMedia('(max-width:820px), (max-height:500px)');
 
   // 모바일(세로 쌓임 레이아웃)에서는 지도 영역 높이를 실제 사진 비율에 맞춰
   // 정확한 픽셀 값으로 고정한다 (object-fit:cover를 그대로 쓰면서도 잘리거나
@@ -3077,6 +3359,18 @@ const db = getFirestore(fbApp);
     const span = $('area-draw-hint-text');
     span.textContent = pendingAreas.length ? t('area_draw_hint_more')(pendingAreas.length) : t('area_draw_hint');
   }
+  // 그리기 중에 이미 그린 범위들을 지도 위에 계속 보여준다(손을 떼면 사라져 보이던 문제)
+  function renderDrawPreview(){
+    mapCanvas.querySelectorAll('.area-draw-saved').forEach(el=>el.remove());
+    if(!drawingArea) return;
+    pendingAreas.forEach(a=>{
+      const r = document.createElement('div');
+      r.className = 'area-draw-rect area-draw-saved';
+      r.style.left = a.x1 + '%'; r.style.top = a.y1 + '%';
+      r.style.width = (a.x2 - a.x1) + '%'; r.style.height = (a.y2 - a.y1) + '%';
+      mapCanvas.appendChild(r);
+    });
+  }
   function startAreaDrawing(){
     if(!mapImageURL) return;
     drawingArea = true;
@@ -3088,6 +3382,7 @@ const db = getFirestore(fbApp);
     hideWorkPage();
     // 대시보드가 아래로 스크롤돼 있으면 지도가 안 보이므로 지도가 보이게 올려준다
     try{ mapWrap.scrollIntoView({ block:'start' }); }catch(e){}
+    renderDrawPreview();
   }
   function exitAreaDrawingUI(){
     drawingArea = false;
@@ -3095,6 +3390,7 @@ const db = getFirestore(fbApp);
     $('area-draw-hint').style.display = 'none';
     mapWrap.classList.remove('area-drawing');
     if(liveAreaRectEl){ liveAreaRectEl.remove(); liveAreaRectEl = null; }
+    mapCanvas.querySelectorAll('.area-draw-saved').forEach(el=>el.remove());
   }
   function finishAreaDrawing(){
     exitAreaDrawingUI();
@@ -3161,6 +3457,7 @@ const db = getFirestore(fbApp);
 
     pendingAreas.push({ x1, y1, x2, y2 });
     updateAreaDrawHintText();
+    renderDrawPreview();
     // 계속 그리기 모드를 유지 — 이어서 드래그하면 범위가 더 추가되고, "완료"를 눌러야 끝남
   }
 
@@ -3231,7 +3528,14 @@ const db = getFirestore(fbApp);
   // 위치 찍기/범위 그리기 중에 하단 탭으로 다른 화면으로 가면 그 모드를 끝낸다
   // (안 그러면 안내창이 계속 떠 있고 지도를 누를 때마다 "새 위치 이름" 창이 뜸)
   document.querySelector('.bottom-tabbar').addEventListener('click', (e)=>{
-    if(!e.target.closest('.tab-btn')) return;
+    const tabBtn = e.target.closest('.tab-btn');
+    if(!tabBtn) return;
+    // 작업등록 작성 중에 다른 탭을 누르면 한 번 확인 (실수로 눌러 입력 내용이 날아가지 않게)
+    const formActive = workPage.style.display === 'block' || drawingArea || (placing && placingFromWorkModal);
+    if(tabBtn.id !== 'tab-add-work' && formActive && workFormDirty){
+      if(!confirm(t('leave_form_confirm'))){ e.stopImmediatePropagation(); e.preventDefault(); return; }
+      workFormDirty = false;
+    }
     if(placing){ cancelPlacing(); placingFromWorkModal = false; }
     if(drawingArea){
       pendingAreas = pendingAreas.slice(0, areaDrawSessionStartCount);
@@ -3255,7 +3559,7 @@ const db = getFirestore(fbApp);
           const z = zones.find(x=>x.id===zoneId);
           if(z){ z.xPct = xPct; z.yPct = yPct; }
           renderAllPins();
-        }catch(e){ console.error('zone reposition failed', e); }
+        }catch(e){ console.error('zone reposition failed', e); showToast(t('action_failed'), true); }
         openZoneManageModal();
       })();
       return;
@@ -3289,12 +3593,16 @@ const db = getFirestore(fbApp);
   $('zn-save').addEventListener('click', async ()=>{
     const name = $('zn-name').value.trim();
     if(!name) return;
+    const normZ = v=>String(v||'').replace(/\s+/g,'').toLowerCase();
+    if(zones.some(z=>normZ(z.name)===normZ(name) && !(renameMode && z.id===pendingRenameId))){
+      showToast(t('zone_dup_name'), true); $('zn-name').focus(); return;
+    }
 
     if(renameMode){
       if(!pendingRenameId) return;
       try{
         await updateDoc(doc(db,'zones',pendingRenameId), { name });
-      }catch(e){ console.error('zone rename failed', e); }
+      }catch(e){ console.error('zone rename failed', e); showToast(t('action_failed'), true); }
       renameMode = false; pendingRenameId = null;
       zoneNameBackdrop.classList.remove('show');
       renderZoneManageList();
@@ -3319,6 +3627,7 @@ const db = getFirestore(fbApp);
       }
     }catch(e){
       console.error('zone create failed', e);
+      showToast(t('action_failed'), true);
     }
   });
 
@@ -3328,8 +3637,8 @@ const db = getFirestore(fbApp);
     renderZoneManageList();
     zoneManageBackdrop.classList.add('show');
   }
-  $('zone-manage-close').addEventListener('click', ()=>zoneManageBackdrop.classList.remove('show'));
-  zoneManageBackdrop.addEventListener('click', (e)=>{ if(e.target===zoneManageBackdrop) zoneManageBackdrop.classList.remove('show'); });
+  $('zone-manage-close').addEventListener('click', ()=>{ zoneManageBackdrop.classList.remove('show'); setActiveTab('dashboard'); });
+  zoneManageBackdrop.addEventListener('click', (e)=>{ if(e.target===zoneManageBackdrop){ zoneManageBackdrop.classList.remove('show'); setActiveTab('dashboard'); } });
   $('zone-manage-add').addEventListener('click', ()=> startPlacing(false));
 
   // 위치 목록 정렬: 숫자로 시작 → 한글(ㄱ~ㅎ)로 시작 → 영어로 시작 → 그 외, 순서로 정렬
@@ -3375,12 +3684,15 @@ const db = getFirestore(fbApp);
         setTimeout(()=>$('zn-name').focus(), 50);
       });
       row.querySelector('[data-act="delete"]').addEventListener('click', async ()=>{
+        const n = markers.filter(m=>m.zoneId===z.id).length;
+        const extra = n ? t('zone_delete_works').replace('{n}', n) : '';
+        if(!confirm(t('zone_delete_confirm').replace('{z}', z.name).replace('{w}', extra))) return;
         try{
           await deleteDoc(doc(db,'zones',z.id));
           zones = zones.filter(x=>x.id!==z.id);
           renderZoneManageList();
           renderAllPins();
-        }catch(e){ console.error('zone delete failed', e); }
+        }catch(e){ console.error('zone delete failed', e); showToast(t('action_failed'), true); }
       });
       list.appendChild(row);
     });
@@ -3428,6 +3740,8 @@ const db = getFirestore(fbApp);
     $('sn-error').style.display='none'; staffNameBackdrop.classList.add('show');
     setTimeout(()=>$('sn-name').focus(), 50);
   });
+  ['sn-name','sn-company'].forEach(id=> $(id).addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); $('sn-save').click(); } }));
+  $('zn-name').addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); $('zn-save').click(); } });
   $('staff-name-close').addEventListener('click', ()=>{ staffNameBackdrop.classList.remove('show'); staffEditId = null; });
   staffNameBackdrop.addEventListener('click', (e)=>{ if(e.target===staffNameBackdrop){ staffNameBackdrop.classList.remove('show'); staffEditId = null; } });
 
@@ -3436,6 +3750,14 @@ const db = getFirestore(fbApp);
     const role = $('sn-role').value;
     const company = role === PARTNER_ROLE ? $('sn-company').value.trim() : '';
     if(!name){ $('sn-name').focus(); return; }
+    // 작업에는 담당자 "이름"으로 저장되므로 같은 이름이 둘이면 구분이 안 된다
+    const dupKey = name.replace(/\s+/g,'').toLowerCase();
+    if(staffList.some(x=> x.id !== staffEditId && (x.name||'').replace(/\s+/g,'').toLowerCase() === dupKey)){
+      $('sn-error').textContent = t('staff_dup_name');
+      $('sn-error').style.display = 'block';
+      $('sn-name').focus();
+      return;
+    }
     if(role === PARTNER_ROLE && !company){
       $('sn-error').textContent = t('staff_company_required');
       $('sn-error').style.display = 'block';
@@ -3500,11 +3822,12 @@ const db = getFirestore(fbApp);
           setTimeout(()=>$('sn-name').focus(), 50);
         });
         row.querySelector('[data-act="delete"]').addEventListener('click', async ()=>{
+          if(!confirm(t('staff_delete_confirm').replace('{n}', s.name))) return;
           try{
             await deleteDoc(doc(db,'staff',s.id));
             staffList = staffList.filter(x=>x.id!==s.id);
             renderStaffPageList();
-          }catch(e){ console.error('staff delete failed', e); }
+          }catch(e){ console.error('staff delete failed', e); showToast(t('action_failed'), true); }
         });
         rowsWrap.appendChild(row);
       });
@@ -3559,7 +3882,17 @@ const db = getFirestore(fbApp);
   document.querySelectorAll('.report-type-tab').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       if(reportType === btn.dataset.type) return;
+      // 탭마다 따로 작성 내용을 보관 (안전개선 신고 내용이 공개되는 아차사고로 넘어가지 않게)
+      reportDrafts[reportType] = { photo: reportPhotoDataURL, content: reportContentInput.value, reporter: $('report-reporter').value, docId: newReportDocId };
       reportType = btn.dataset.type;
+      const d = reportDrafts[reportType] || {};
+      reportPhotoDataURL = d.photo || null;
+      reportPhotoImg.src = d.photo || '';
+      reportPhotoPreview.style.display = d.photo ? 'block' : 'none';
+      reportPhotoInput.value = '';
+      reportContentInput.value = d.content || '';
+      $('report-reporter').value = d.reporter || '';
+      newReportDocId = d.docId || null;
       reportFormError.style.display = 'none';
       applyReportTypeUI();
       renderReportList();
@@ -3568,8 +3901,10 @@ const db = getFirestore(fbApp);
   $('report-page-back-btn').addEventListener('click', ()=>{ closeAllPages(); setActiveTab('dashboard'); });
 
   let newReportDocId = null;
+  const reportDrafts = { hazard:{}, near_miss:{} };
   function resetReportForm(){
     newReportDocId = null;
+    if(typeof reportType !== 'undefined') reportDrafts[reportType] = {};
     reportPhotoDataURL = null;
     reportPhotoInput.value = '';
     reportPhotoPreview.style.display = 'none';
@@ -4023,6 +4358,7 @@ const db = getFirestore(fbApp);
   }
   function refreshDashboardViews(){
     renderAllPins();
+    renderLegend();
     renderSidebar();
     renderStats();
     renderEquipmentSummary();
@@ -4165,6 +4501,12 @@ const db = getFirestore(fbApp);
       syncDashFilterChips();
     });
   });
+  $('dash-filter-company-all').addEventListener('click', ()=>{ dashDraft.companies.clear(); renderDashFilterCompanyList(); });
+  $('dash-filter-company-none').addEventListener('click', ()=>{
+    // "모두 해제" 후 보고 싶은 업체만 다시 눌러 고를 수 있게
+    [...new Set(markers.map(m=>m.company).filter(Boolean))].forEach(c=> dashDraft.companies.add(c));
+    renderDashFilterCompanyList();
+  });
   $('dash-filter-vulnerable').addEventListener('change', (e)=>{
     dashDraft.vulnerableOnly = e.target.checked;
     syncDashFilterChips();
@@ -4188,12 +4530,26 @@ const db = getFirestore(fbApp);
   function riskLabel(r){ return r==='high'?t('risk_high'):r==='mid'?t('risk_mid'):t('risk_low'); }
 
   // ---------------- company colors ----------------
-  const COMPANY_PALETTE = ['#2563EB','#059669','#D97706','#7C3AED','#DB2777','#0D9488','#DC2626','#4B5563','#65A30D','#0891B2'];
-  function companyColor(name){
-    if(!name) return '#9CA3AF';
+  // 빨간색은 "고위험" 표시와 헷갈려서 업체 색에서 뺐다. 그날 화면에 나오는 업체끼리는
+  // 가능한 한 서로 다른 색이 되도록 배정한다(예전엔 해시가 겹치면 두 업체가 같은 색이었음).
+  // 위험도 색(빨강·주황)과 헷갈리는 색은 빼고, 앞쪽일수록 서로 확실히 구분되는 순서로 둔다
+  const COMPANY_PALETTE = ['#2563EB','#DB2777','#0D9488','#7C3AED','#92400E','#0891B2','#65A30D','#111827','#A21CAF','#1E3A8A','#6B7280'];
+  let companyColorMap = new Map();
+  function companyHashIndex(name){
     let hash = 0;
     for(let i=0;i<name.length;i++){ hash = (hash*31 + name.charCodeAt(i)) >>> 0; }
-    return COMPANY_PALETTE[hash % COMPANY_PALETTE.length];
+    return hash % COMPANY_PALETTE.length;
+  }
+  function rebuildCompanyColors(){
+    const names = [...new Set(markers.map(m=>m.company).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko'));
+    const used = new Set(); const map = new Map();
+    // 이름 순서대로 구분이 잘 되는 색부터 배정(업체 수가 적을수록 색 차이가 확실함)
+    names.forEach((name, i)=>{ map.set(name, COMPANY_PALETTE[i % COMPANY_PALETTE.length]); });
+    companyColorMap = map;
+  }
+  function companyColor(name){
+    if(!name) return '#9CA3AF';
+    return companyColorMap.get(name) || COMPANY_PALETTE[companyHashIndex(name)];
   }
 
   // 하위호환: 예전 문서는 area(단일 객체) 하나만 있고, 새 문서는 areas(배열)를 가진다.
@@ -4249,7 +4605,7 @@ const db = getFirestore(fbApp);
     const canvasRectForPins = mapCanvas.getBoundingClientRect();
     const canvasWpx = canvasRectForPins.width || mapCanvas.offsetWidth || 1;
     const canvasHpx = canvasRectForPins.height || mapCanvas.offsetHeight || 1;
-    const isMobileView = window.innerWidth <= 820;
+    const isMobileView = mobileLayoutQuery.matches;
     // PC는 맨 처음 크기 그대로, 모바일만 조금 더 키운 값
     const AREA_PIN_RATIO = isMobileView ? 0.38 : 0.6;
     const NO_AREA_PIN_RATIO = isMobileView ? 0.028 : 0.045;
@@ -4274,6 +4630,7 @@ const db = getFirestore(fbApp);
         pinSizePx = Math.max(PIN_MIN_NOAREA_PX, Math.min(PIN_MAX_PX, canvasWpx * NO_AREA_PIN_RATIO));
       }
       pin.style.setProperty('--pin-size', pinSizePx.toFixed(1) + 'px');
+      pin.dataset.wid = m.id;
       const warnBadge = isDone ? `<div class="pin-warn pin-done-badge">✓</div>` : (m.risk === 'high' ? `<div class="pin-warn">⚠</div>` : '');
       const labelText = [m.company, workLocName(m)].filter(Boolean).join(' · ');
       pin.innerHTML = `<div class="pin-circle" style="background:${pinColor}">${m.people||0}</div>${warnBadge}<div class="pin-label">${escapeHTML(labelText || m.workType || t('work_fallback'))}</div>`;
@@ -4308,6 +4665,81 @@ const db = getFirestore(fbApp);
       // 위치 정보가 전혀 없는 작업(예: 위치 미지정으로 등록됨)은 지도에 표시하지 않음
     });
 
+    // 같은 자리에 겹친 핀(같은 범위·같은 지점)은 손가락으로 하나씩 누를 수 있도록 동그랗게 펼친다
+    (function declutterPins(){
+      const W = canvasWpx, H = canvasHpx;
+      // 지도가 화면에 안 보이는 상태(다른 화면이 열려 있음)에서는 크기를 알 수 없으니 건너뛴다.
+      // 홈으로 돌아올 때 다시 그리면서 펼쳐준다.
+      if(W < 80 || H < 50) return;
+      const CLUSTER_MIN = 7; // 이 이상 겹치면 펼치지 않고 "N건" 묶음 핀으로 보여준다(지도 밖으로 밀려나지 않게)
+      // 항목 = 핀 하나 또는 묶음. 원래 위치(ox,oy)는 고정하고, 겹침 판단도 원래 위치 기준으로 한다.
+      let items = [...mapCanvas.querySelectorAll('.pin')].map(p=>{
+        const x = parseFloat(p.style.left)/100*W, y = parseFloat(p.style.top)/100*H;
+        return { pins:[p], ox:x, oy:y, x, y, s: parseFloat(p.style.getPropertyValue('--pin-size')) || 30 };
+      });
+      const clampX = (v,s)=>Math.min(W - s/2, Math.max(s/2, v));
+      const clampY = (v,s)=>Math.min(H - s/2, Math.max(s/2, v));
+      // 겹친 핀끼리 묶어서: 적으면 원래 자리 주변에 원 모양으로 펼치고, 많거나 펼친 뒤에도 또 겹치면 "N건" 묶음 핀으로 만든다.
+      // (예전처럼 계속 크게 펼치다 보면 핀이 지도 밖으로 밀려나 안 보였음)
+      for(let pass=0; pass<20; pass++){
+        const used = new Set(); const next = []; let changed = false;
+        for(let i=0;i<items.length;i++){
+          if(used.has(i)) continue;
+          const group = [i]; used.add(i);
+          for(let gi=0; gi<group.length; gi++){
+            const a = items[group[gi]];
+            for(let j=0;j<items.length;j++){
+              if(used.has(j)) continue;
+              const b = items[j];
+              if(Math.hypot(a.x-b.x, a.y-b.y) < Math.min(a.s, b.s)*0.95){ group.push(j); used.add(j); }
+            }
+          }
+          const g = group.map(k=>items[k]);
+          if(g.length === 1){ next.push(g[0]); continue; }
+          changed = true;
+          const allPins = g.flatMap(q=>q.pins);
+          const cx = g.reduce((a,q)=>a+q.ox*q.pins.length,0)/allPins.length;
+          const cy = g.reduce((a,q)=>a+q.oy*q.pins.length,0)/allPins.length;
+          const sMax = Math.max(...g.map(q=>q.s));
+          const canSpread = allPins.length < CLUSTER_MIN && !g.some(q=>q.cluster) && pass < 3;
+          if(!canSpread){
+            const cs = Math.min(PIN_MAX_PX + 6, Math.max(...g.map(q=>q.cluster ? q.s : q.s*1.15)));
+            next.push({ pins:allPins, ox:cx, oy:cy, x:clampX(cx,cs), y:clampY(cy,cs), s:cs, cluster:true });
+          } else {
+            const r = Math.max(sMax*0.75, sMax*1.05/(2*Math.sin(Math.PI/allPins.length)));
+            allPins.forEach((pin,k)=>{
+              const src = g.find(q=>q.pins.includes(pin));
+              const ang = (2*Math.PI*k/allPins.length) - Math.PI/2;
+              next.push({ pins:[pin], ox:cx, oy:cy, s:src.s, x:clampX(cx + r*Math.cos(ang), src.s), y:clampY(cy + r*Math.sin(ang), src.s) });
+            });
+          }
+        }
+        items = next;
+        if(!changed) break;
+      }
+      items.forEach(q=>{
+        if(q.cluster){
+          q.pins.forEach(p=>p.remove());
+          const ids = q.pins.map(p=>p.dataset.wid);
+          const uniq = [...new Set(ids)];
+          const ws = uniq.map(id=>markers.find(m=>m.id===id)).filter(Boolean);
+          const hasHigh = ws.some(m=>m.risk==='high' && m.status!=='done');
+          const sz = q.s;
+          const cl = document.createElement('div');
+          cl.className = 'pin pin-cluster';
+          cl.style.left = (q.x/W*100) + '%';
+          cl.style.top = (q.y/H*100) + '%';
+          cl.style.setProperty('--pin-size', sz.toFixed(1) + 'px');
+          cl.innerHTML = `<div class="pin-circle">${uniq.length}${t('unit_count')}</div>${hasHigh?'<div class="pin-warn">⚠</div>':''}<div class="pin-label">${escapeHTML(t('pin_cluster_label'))}</div>`;
+          cl.addEventListener('click', (ev)=>{ ev.stopPropagation(); openZoneDetail(null, uniq); });
+          mapCanvas.appendChild(cl);
+        } else {
+          q.pins[0].style.left = (q.x/W*100) + '%';
+          q.pins[0].style.top = (q.y/H*100) + '%';
+        }
+      });
+    })();
+
     // 오늘 등록된 작업이 하나도 없는 위치(구역)만 회색 점으로 표시
     zones.forEach(zone=>{
       const hasWorkToday = markers.some(m=>m.zoneId === zone.id);
@@ -4335,19 +4767,40 @@ const db = getFirestore(fbApp);
     });
     html += `<span><i class="dot" style="background:var(--high)"></i>⚠ ${t('legend_high')}</span>`;
     html += `<span><i class="dot" style="background:var(--text-dim)"></i>${t('legend_empty_zone')}</span>`;
+    // 위치를 직접 입력했거나 위치가 삭제돼서 지도에 핀이 없는 작업 수
+    const offMap = visibleMarkers().filter(m=> !getMarkerAreas(m).length && !(m.zoneId && zones.some(z=>z.id===m.zoneId))).length;
+    if(offMap) html += `<span>${escapeHTML(t('not_on_map').replace('{n}', offMap))}</span>`;
+    // 검색/필터가 걸려 있으면 통계도 일부만 집계된다는 걸 알려주고 한 번에 해제할 수 있게
+    const filterOn = !!dashSearchQuery.trim() || dashExcludedRisks.size || dashExcludedStatuses.size || dashExcludedCompanies.size || dashFilterVulnerableOnly;
+    if(filterOn) html += `<button type="button" class="filter-active-chip" id="legend-clear-filter">${escapeHTML(t('filter_active'))}</button>`;
     legendEl.innerHTML = html;
+    const clr = $('legend-clear-filter');
+    if(clr) clr.addEventListener('click', ()=>{
+      dashExcludedRisks.clear(); dashExcludedStatuses.clear(); dashExcludedCompanies.clear(); dashFilterVulnerableOnly = false;
+      resetDashSearchOnLoad();
+      refreshDashboardViews();
+    });
   }
 
   // ---------------- zone detail modal (click pin) ----------------
   const zoneDetailBackdrop = $('zone-detail-backdrop');
   let currentDetailZoneId = null;
 
-  function openZoneDetail(zoneId){
+  function openZoneDetail(zoneId, workIds){
+    // workIds가 있으면 지도에서 겹친 "N건" 묶음 핀을 누른 경우: 그 작업들만 목록으로 보여준다
+    let worksHere;
+    if(workIds){
+      worksHere = markers.filter(m=>workIds.includes(m.id));
+      const zIds = [...new Set(worksHere.map(m=>m.zoneId).filter(Boolean))];
+      zoneId = zIds.length === 1 ? zIds[0] : null;
+    } else {
+      worksHere = markers.filter(m=>m.zoneId===zoneId);
+    }
+    worksHere.sort((a,b)=>riskRank(a.risk)-riskRank(b.risk));
     currentDetailZoneId = zoneId;
     const zone = zones.find(z=>z.id===zoneId);
-    $('zone-detail-title').textContent = '📍 ' + (zone ? zone.name : t('location_fallback'));
+    $('zone-detail-title').textContent = '📍 ' + (zone ? zone.name : (workIds ? t('pin_cluster_title').replace('{n}', worksHere.length) : t('location_fallback')));
     const list = $('zone-detail-list');
-    const worksHere = markers.filter(m=>m.zoneId===zoneId).sort((a,b)=>riskRank(a.risk)-riskRank(b.risk));
     list.innerHTML = '';
     if(worksHere.length === 0){
       list.innerHTML = `<div class="zone-empty">${t('zone_detail_empty')}</div>`;
@@ -4464,11 +4917,18 @@ const db = getFirestore(fbApp);
     const m = markers.find(x=>x.id===workDetailId);
     if(!m) return;
     const newStatus = m.status === 'done' ? 'in_progress' : 'done';
+    if(!confirm(t(newStatus === 'done' ? 'complete_confirm' : 'reopen_confirm'))) return;
+    const btn = $('wd-complete-btn');
+    btn.disabled = true;
     try{
       await updateDoc(doc(db,'works',workDetailId), { status: newStatus });
       workDetailBackdrop.classList.remove('show');
+      showToast(t('status_changed_ok'));
     }catch(e){
       console.error('status toggle failed', e);
+      showToast(t('action_failed'), true);
+    }finally{
+      btn.disabled = false;
     }
   });
   $('wd-edit-link').addEventListener('click', ()=>{
@@ -4567,9 +5027,23 @@ const db = getFirestore(fbApp);
     // 통째로 깨졌었다(사진/범례/통계/목록이 뒤죽박죽). 인라인 스타일을
     // 아예 지워서 CSS가 다시 제어하게 한다.
     mainArea.style.display = '';
+    // 다른 화면에 있는 동안 지도 크기를 몰라 핀 배치가 미뤄졌을 수 있으니 홈으로 돌아오면 다시 그림
+    if(mapImageURL) requestAnimationFrame(()=>{ try{ renderAllPins(); }catch(e){} });
   }
   let workFormMode = 'add'; // 'add' | 'edit' | 'copy'
   let newWorkDocId = null;
+  let workSaveSeq = 0;
+  let workFormDirty = false; // 작업등록 화면에 사용자가 뭔가 입력했는지 (나갈 때 확인용)
+  // 작업등록 화면 상단에 "어느 날짜로 등록되는지" 표시 (오늘이 아니면 주황색 경고)
+  function updateWorkFormDateBanner(){
+    const el = $('work-form-date');
+    if(!el) return;
+    if(workFormMode === 'edit'){ el.style.display = 'none'; return; }
+    const isToday = currentDate === todayStr();
+    el.style.display = 'block';
+    el.classList.toggle('warn', !isToday);
+    el.textContent = t(isToday ? 'form_date_today' : 'form_date_other').replace('{d}', fmtShortDate(currentDate));
+  }
   function updateWorkFormTitle(){
     const el = $('modal-title');
     if(el) el.textContent = t(workFormMode === 'copy' ? 'work_copy_title' : workFormMode === 'edit' ? 'work_edit_title' : 'work_add_title');
@@ -4618,6 +5092,8 @@ const db = getFirestore(fbApp);
     sel.appendChild(manualOpt());
     updateZoneManualUI();
   }
+  document.getElementById('page-add-work').addEventListener('input', ()=>{ workFormDirty = true; });
+  document.getElementById('page-add-work').addEventListener('change', ()=>{ workFormDirty = true; });
   document.getElementById('page-add-work').addEventListener('input', (e)=>{
     const f = e.target.closest && e.target.closest('.field-invalid'); if(f) f.classList.remove('field-invalid');
   });
@@ -4633,10 +5109,14 @@ const db = getFirestore(fbApp);
     // duplicateFrom: 다른 작업의 id. 지정하면 그 작업 내용을 그대로 불러오되
     // "새 작업"으로 등록되도록 한다 (반복 입력 줄이기 - 복사해서 등록).
     editingId = duplicateFrom ? null : id;
-    newWorkDocId = null; // 새 작업의 문서 ID는 첫 저장 시 한 번만 만들고, 재시도 때도 같은 ID를 쓴다
+    newWorkDocId = null;
+    workSaveSeq++;
+    workFormDirty = false;
+    { const sb = $('save-btn'); sb.disabled = false; sb.textContent = t('save_btn'); } // 새 작업의 문서 ID는 첫 저장 시 한 번만 만들고, 재시도 때도 같은 ID를 쓴다
     const m = duplicateFrom ? markers.find(x=>x.id===duplicateFrom) : (id ? markers.find(x=>x.id===id) : null);
     workFormMode = duplicateFrom ? 'copy' : (m ? 'edit' : 'add');
     updateWorkFormTitle();
+    updateWorkFormDateBanner();
     // 전날 작업 가져오기는 새로 등록할 때만 의미가 있어서, 기존 작업을 수정할 때는 숨긴다
     const importBtnEl = $('import-work-btn');
     if(importBtnEl) importBtnEl.style.display = editingId ? 'none' : '';
@@ -4672,9 +5152,13 @@ const db = getFirestore(fbApp);
     showWorkPage();
     setActiveTab('add-work');
   }
-  function closeWorkModal(){ hideWorkPage(); editingId = null; pendingAreas = []; setActiveTab('dashboard'); }
+  function closeWorkModal(){ hideWorkPage(); if(editingId) workFormDirty = false; editingId = null; pendingAreas = []; setActiveTab('dashboard'); }
 
-  $('page-back-btn').addEventListener('click', closeWorkModal);
+  $('page-back-btn').addEventListener('click', ()=>{
+    if(workFormDirty && !confirm(t('leave_form_confirm'))) return;
+    workFormDirty = false;
+    closeWorkModal();
+  });
   $('new-zone-from-work').addEventListener('click', ()=> requireAdmin(()=> startPlacing(true)));
 
   // ---------------- 전날 작업 가져오기 (등록 시간 단축) ----------------
@@ -4711,6 +5195,7 @@ const db = getFirestore(fbApp);
   // openWorkModal이 기존 작업(m)의 내용을 폼에 채우는 로직과 최대한 동일하게 맞춘다
   // (등록 폼 필드가 늘어날 때 여기도 같이 업데이트해줘야 함).
   function fillWorkFormFrom(m){
+    workFormDirty = true;
     $('f-worktype').value = m.workType || '';
     $('f-people').value = m.people || '';
     $('f-vulnerable').value = String(Number(m.vulnerable) || 0);
@@ -4817,7 +5302,18 @@ const db = getFirestore(fbApp);
   $('f-company').addEventListener('blur', checkCompanyImportHint);
   // 업체명을 바꾸면 협력업체 관리감독자 목록도 그 업체 기준으로 다시 그림
   $('f-company').addEventListener('input', ()=>{ if(typeof populateStaffSelect === 'function') populateStaffSelect(); });
-  $('f-company').addEventListener('change', ()=>{ if(typeof populateStaffSelect === 'function') populateStaffSelect(); });
+  $('f-company').addEventListener('change', ()=>{
+    if(typeof populateStaffSelect === 'function') populateStaffSelect();
+    // 업체를 바꾸면, 이미 골라둔 "다른 업체" 협력업체 관리감독자는 빼준다
+    const key = normCompany($('f-company').value);
+    if(!key) return;
+    const removed = [];
+    [...staffChecklistSelected].forEach(name=>{
+      const st = staffList.find(x=>x.name===name);
+      if(st && st.role === PARTNER_ROLE && st.company && normCompany(st.company) !== key){ staffChecklistSelected.delete(name); removed.push(name); }
+    });
+    if(removed.length){ renderStaffChecklist(); showToast(t('partner_removed').replace('{n}', removed.join(', '))); }
+  });
 
   // ---------------- status page (browse today's works, grouped by company) ----------------
   let statusSearch = '';
@@ -4875,7 +5371,7 @@ const db = getFirestore(fbApp);
     const countEl = $('status-count');
     if(countEl) countEl.textContent = `${filtered.length}${t('unit_cases')}`;
     if(filtered.length === 0){
-      list.innerHTML = `<div class="status-empty">${t('status_empty')}</div>`;
+      list.innerHTML = `<div class="status-empty">${t(markers.length === 0 ? 'day_works_empty' : 'status_empty')}</div>`;
       return;
     }
 
@@ -4960,6 +5456,15 @@ const db = getFirestore(fbApp);
     return rows;
   }
 
+  function equipPlainText(list){
+    if(!Array.isArray(list)) return '';
+    return list.map(e=>{
+      if(!e || !e.type) return null;
+      const c = Number(e.count) || 1;
+      const name = e.type === 'other' ? (e.name || '') : (EQUIPMENT_TYPES.includes(e.type) ? equipLabel(e.type) : '');
+      return name ? name + (c > 1 ? ` x${c}` : '') : null;
+    }).filter(Boolean).join(', ');
+  }
   function buildExportRows(works){
     return works
       .slice()
@@ -4977,6 +5482,7 @@ const db = getFirestore(fbApp);
           '업체': m.company || '',
           '감시단/안전담당자': m.supervisor || '',
           '상태': statusLabelKo(m.status),
+          '투입 장비': equipPlainText(m.equipment),
           '메모': m.note || ''
         };
       });
@@ -4987,6 +5493,11 @@ const db = getFirestore(fbApp);
     statusEl.style.display = 'block';
     statusEl.style.color = '';
     statusEl.textContent = t('export_loading');
+    if(typeof XLSX === 'undefined'){
+      statusEl.style.color = 'var(--high)';
+      statusEl.textContent = t('export_lib_missing');
+      return;
+    }
     try{
       const base = new Date(currentDate);
       let startDate, endDate, fileTag;
@@ -5018,7 +5529,7 @@ const db = getFirestore(fbApp);
       const rows = buildExportRows(works);
       const ws = XLSX.utils.json_to_sheet(rows);
       ws['!cols'] = [
-        {wch:11},{wch:14},{wch:24},{wch:8},{wch:6},{wch:13},{wch:16},{wch:18},{wch:8},{wch:30}
+        {wch:11},{wch:16},{wch:26},{wch:8},{wch:6},{wch:9},{wch:13},{wch:16},{wch:18},{wch:8},{wch:22},{wch:30}
       ];
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, t('export_sheet_name'));
@@ -5072,12 +5583,13 @@ const db = getFirestore(fbApp);
       if(!ok) return;
       try{
         await Promise.all(ids.map(id => deleteDoc(doc(db,'works',id))));
-      }catch(e){ console.error('bulk delete failed', e); }
+      }catch(e){ console.error('bulk delete failed', e); showToast(t('action_failed'), true); return; }
     } else {
       try{
         await Promise.all(ids.map(id => updateDoc(doc(db,'works',id), { status:'done' })));
-      }catch(e){ console.error('bulk complete failed', e); }
+      }catch(e){ console.error('bulk complete failed', e); showToast(t('action_failed'), true); return; }
     }
+    showToast(t('status_changed_ok'));
     bulkSelectMode = false;
     bulkSelectedIds.clear();
     updateBulkBar();
@@ -5115,6 +5627,9 @@ const db = getFirestore(fbApp);
     if(!ok) return;
 
     showDaycloseStatus(t('dayclose_running')(inProgress.length), false);
+    const dcBtn = $('dayclose-btn');
+    if(dcBtn.disabled) return;
+    dcBtn.disabled = true; // 처리 중 두 번 눌러 중복 실행되지 않게
     try{
       await Promise.all(inProgress.map(m => updateDoc(doc(db, 'works', m.id), { status: 'done' })));
       // Firestore의 실시간 리스너(onSnapshot)가 이 쓰기를 반영해서 markers를
@@ -5133,6 +5648,8 @@ const db = getFirestore(fbApp);
     }catch(e){
       console.error('day close failed', e);
       showDaycloseStatus(t('dayclose_error'), true);
+    }finally{
+      dcBtn.disabled = false;
     }
   });
 
@@ -5145,15 +5662,15 @@ const db = getFirestore(fbApp);
 
   $('save-btn').addEventListener('click', async ()=>{
     const zoneSel = $('f-zone').value;
-    const isManualZone = zoneSel === ZONE_MANUAL;
-    const zoneId = isManualZone ? '' : zoneSel;
-    const locationText = isManualZone ? $('f-zone-text').value.trim() : '';
+    let isManualZone = zoneSel === ZONE_MANUAL;
+    let zoneId = isManualZone ? '' : zoneSel;
+    let locationText = isManualZone ? $('f-zone-text').value.trim() : '';
     const workType = $('f-worktype').value.trim();
     const people = Number($('f-people').value) || 0;
     const vulnerable = Number($('f-vulnerable').value) || 0;
     const timeStart = $('f-time-start').value;
     const timeEnd = $('f-time-end').value;
-    const time = timeStart && timeEnd ? `${timeStart}~${timeEnd}` : (timeStart || timeEnd || '');
+    let time = timeStart && timeEnd ? `${timeStart}~${timeEnd}` : (timeStart || timeEnd || '');
     const company = $('f-company').value.trim();
     const supervisor = [...staffChecklistSelected].join(', ');
     const note = $('f-note').value.trim();
@@ -5164,37 +5681,73 @@ const db = getFirestore(fbApp);
     const errEl = $('work-form-error');
     // 필수 항목(*) 확인 — 화면 위에서부터 순서대로, 처음 빠진 칸으로 이동해서 빨갛게 표시
     document.querySelectorAll('#page-add-work .field-invalid').forEach(el=>el.classList.remove('field-invalid'));
-    const timeOk = (v)=> /^\d{1,2}:\d{2}$/.test(v);
-    const checks = [
-      [!company, 'err_company_required', 'f-company'],
-      [!$('f-people').value.trim() || people <= 0, 'err_people_required', 'f-people'],
-      [!workType, 'err_worktype_required', 'f-worktype'],
-      [!zoneSel || (zones.length === 0 && !isManualZone), 'err_zone_required', 'f-zone'],
-      [isManualZone && !locationText, 'err_zone_text_required', 'f-zone-text'],
-      [$('f-vulnerable').value.trim() === '', 'err_vulnerable_required', 'f-vulnerable'],
-      [!timeOk(timeStart) || !timeOk(timeEnd), 'err_time_required', !timeOk(timeStart) ? 'f-time-start' : 'f-time-end'],
-      [staffChecklistSelected.size === 0, 'err_supervisor_required', 'f-staff-select'],
-      [!note, 'err_note_required', 'f-note'],
-    ];
-    const miss = checks.find(c=>c[0]);
-    if(miss){
-      const target = $(miss[2]);
-      errEl.textContent = t(miss[1]);
+    // 직접 입력한 위치가 목록에 있는 위치 이름과 같으면 그 위치로 바꿔준다(지도에 핀이 보이도록)
+    if(isManualZone && locationText){
+      const key = locationText.replace(/\s+/g,'').toLowerCase();
+      const hit = zones.find(z=> (z.name||'').replace(/\s+/g,'').toLowerCase() === key);
+      if(hit){
+        zoneId = hit.id; locationText = ''; isManualZone = false;
+        populateZoneSelect(hit.id);
+        showToast(t('zone_text_matched').replace('{z}', hit.name));
+      }
+    }
+    const tStart = normalizeTimeStr(timeStart), tEnd = normalizeTimeStr(timeEnd);
+    if(tStart) $('f-time-start').value = tStart;
+    if(tEnd) $('f-time-end').value = tEnd;
+    const fieldLabel = (id)=>{
+      const fe = $(id) && $(id).closest('.field');
+      const lb = fe && fe.querySelector('label');
+      return lb ? lb.textContent.replace(/\*/g,'').replace(/\s+/g,' ').trim() : id;
+    };
+    // 빠진 칸을 한 번에 모두 알려준다(예전에는 저장을 누를 때마다 하나씩만 알려줬음)
+    const problems = []; // [입력칸 id, 따로 보여줄 안내 키(없으면 '입력해주세요' 목록에 포함)]
+    const peopleRaw = $('f-people').value.trim();
+    const vulRaw = $('f-vulnerable').value.trim();
+    if(!company) problems.push(['f-company']);
+    if(!peopleRaw) problems.push(['f-people']);
+    else if(!/^\d+$/.test(peopleRaw) || Number(peopleRaw) < 1) problems.push(['f-people', 'err_people_int']);
+    if(!workType) problems.push(['f-worktype']);
+    if(!zoneSel || (zones.length === 0 && !isManualZone && !zoneId)) problems.push(['f-zone']);
+    else if(isManualZone && !locationText) problems.push(['f-zone-text']);
+    if(vulRaw === '') problems.push(['f-vulnerable']);
+    else if(!/^\d+$/.test(vulRaw) || (/^\d+$/.test(peopleRaw) && Number(vulRaw) > Number(peopleRaw))) problems.push(['f-vulnerable', 'err_vulnerable_range']);
+    if(!timeStart.trim()) problems.push(['f-time-start']);
+    else if(!tStart) problems.push(['f-time-start', 'err_time_format']);
+    if(!timeEnd.trim()) problems.push(['f-time-end']);
+    else if(!tEnd) problems.push(['f-time-end', 'err_time_format']);
+    if(staffChecklistSelected.size === 0) problems.push(['f-staff-select']);
+    if(!note) problems.push(['f-note']);
+    if(problems.length){
+      problems.forEach(([id])=>{ const fe = $(id) && $(id).closest('.field'); if(fe) fe.classList.add('field-invalid'); });
+      const missing = [...new Set(problems.filter(p=>!p[1]).map(p=>fieldLabel(p[0])))];
+      const specific = [...new Set(problems.filter(p=>p[1]).map(p=>t(p[1])))];
+      const msgs = [];
+      if(missing.length) msgs.push(t('err_missing_list').replace('{list}', missing.join(', ')));
+      msgs.push(...specific);
+      errEl.textContent = msgs.join('\n');
+      errEl.style.whiteSpace = 'pre-line';
       errEl.style.display = 'block';
-      const fieldEl = target && target.closest('.field');
-      if(fieldEl) fieldEl.classList.add('field-invalid');
+      const target = $(problems[0][0]);
       if(target){
         target.scrollIntoView({behavior:'smooth', block:'center'});
         if(target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') setTimeout(()=>target.focus({preventScroll:true}), 300);
       }
       return;
     }
+    // 종료가 시작보다 빠르면 야간작업인지 한 번 확인
+    if(tEnd <= tStart && !confirm(t('time_overnight_confirm'))){
+      const fe = $('f-time-end').closest('.field'); if(fe) fe.classList.add('field-invalid');
+      $('f-time-end').focus();
+      return;
+    }
+    time = `${tStart}~${tEnd}`;
     errEl.style.display = 'none';
 
     // 저장 중에는 버튼을 잠가서 두 번 눌러 같은 작업이 2개 생기는 것을 막고,
     // 실패(권한 오류·네트워크 끊김·15초 응답 없음)하면 화면에 알려준다.
     const saveBtn = $('save-btn');
     if(saveBtn.disabled) return;
+    const mySeq = ++workSaveSeq; // 저장 중에 폼을 닫고 새로 열면, 늦게 끝난 이전 저장이 새 폼의 버튼/안내를 건드리지 않게
     saveBtn.disabled = true;
     saveBtn.textContent = t('saving');
     const withTimeout = (pr)=> Promise.race([pr, new Promise((_, rej)=> setTimeout(()=> rej(new Error('TIMEOUT')), 15000))]);
@@ -5211,15 +5764,21 @@ const db = getFirestore(fbApp);
       }
       pushRecentValue('safetytop_recent_worktypes', workType);
       pushRecentValue('safetytop_recent_companies', company);
+      if(mySeq !== workSaveSeq) return; // 그 사이에 다른 폼이 열렸으면 화면은 건드리지 않음
+      workFormDirty = false;
       closeWorkModal();
+      showToast(t('saved_ok'));
     }catch(e){
       console.error('work save failed', e);
+      if(mySeq !== workSaveSeq) return;
       errEl.textContent = t(e && e.message === 'TIMEOUT' ? 'save_slow' : 'save_failed');
       errEl.style.display = 'block';
       errEl.scrollIntoView({behavior:'smooth', block:'center'});
     }finally{
-      saveBtn.disabled = false;
-      saveBtn.textContent = t('save_btn');
+      if(mySeq === workSaveSeq){
+        saveBtn.disabled = false;
+        saveBtn.textContent = t('save_btn');
+      }
     }
   });
 
@@ -5390,9 +5949,197 @@ const db = getFirestore(fbApp);
   loadWeather();
   setInterval(loadWeather, 30 * 60 * 1000); // refresh every 30 min
 
+  // 사진 크게 보기/알림은 탭바보다 위에 떠야 해서 body 바로 아래로 옮긴다
+  ['photo-lightbox','toast'].forEach(id=>{ const el = document.getElementById(id); if(el) document.body.appendChild(el); });
+
+  // 휴대폰에서 키보드가 실제로 올라와 화면이 줄어든 동안에만 하단 탭바를 숨겨 입력칸이 가려지지 않게.
+  // (입력칸에 포커스만 남아 있고 키보드는 내려간 경우엔 탭바를 다시 보여준다 — 안드로이드는
+  //  뒤로가기로 키보드를 내려도 포커스가 남아 있어서, 포커스만 보면 탭바가 계속 숨는 문제가 생김)
+  function isTypingEl(a){
+    return !!a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !['checkbox','radio','file','button','submit','date'].includes(a.type)));
+  }
+  function updateKeyboardState(){
+    const vv = window.visualViewport;
+    const shrunk = vv ? (vv.height < window.innerHeight - 120) : false;
+    document.body.classList.toggle('kbd-open', !!(mobileLayoutQuery.matches && shrunk && isTypingEl(document.activeElement)));
+  }
+  if(window.visualViewport) window.visualViewport.addEventListener('resize', updateKeyboardState);
+  document.addEventListener('focusin', ()=> setTimeout(updateKeyboardState, 300));
+  document.addEventListener('focusout', ()=> setTimeout(updateKeyboardState, 80));
+
+  // 휴대폰 "뒤로가기"(버튼/제스처): 앱을 빠져나가지 않고 열린 창 → 열린 화면 순서로 닫는다.
+  // 창이나 화면이 열리면 브라우저 기록을 하나 쌓아 두고, 뒤로가기를 누르면 그 기록을 써서 닫는다.
+  // ---------------- 공지사항 ----------------
+  // 관리자가 meta/notice 문서에 공지를 쓰면, 앱을 연 모든 사람에게 팝업으로 뜬다.
+  // "오늘 하루 보지 않기"는 이 기기에서 오늘만 숨기고, 공지 내용을 새로 게시하면 다시 뜬다.
+  const NOTICE_HIDE_KEY = 'safetytop_notice_hide';
+  const noticePopupBackdrop = $('notice-popup-backdrop');
+  const noticeEditBackdrop = $('notice-edit-backdrop');
+  let currentNotice = null;          // Firestore에서 받은 공지
+  let noticeShownVersion = null;     // 이번 접속에서 이미 띄운 공지(닫은 뒤 다시 안 뜨게)
+  let noticeSkipVersion = null;      // 관리자가 방금 게시한 공지는 본인 화면에 자동으로 띄우지 않음
+
+  function noticeStatus(n){
+    if(!n || !n.active || !n.title) return 'off';
+    const today = todayStr();
+    if(n.startDate && today < n.startDate) return 'scheduled';
+    if(n.endDate && today > n.endDate) return 'expired';
+    return 'on';
+  }
+  function noticeHiddenToday(n){
+    try{
+      const h = JSON.parse(localStorage.getItem(NOTICE_HIDE_KEY) || 'null');
+      return !!(h && h.v === n.version && h.d === todayStr());
+    }catch(e){ return false; }
+  }
+  function fmtNoticeDate(iso){
+    if(!iso) return '';
+    const [y,m,d] = iso.split('-').map(Number);
+    return `${m}/${d}`;
+  }
+  function showNoticePopup(){
+    const n = currentNotice;
+    if(!n) return;
+    $('notice-popup-title').textContent = n.title || '';
+    $('notice-popup-text').textContent = n.body || '';
+    const parts = [];
+    if(n.updatedAt){ const d = new Date(n.updatedAt); parts.push(`${t('notice_posted')} ${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`); }
+    if(n.endDate) parts.push(`${fmtNoticeDate(n.endDate)} ${t('notice_until')}`);
+    $('notice-popup-meta').textContent = parts.join(' · ');
+    noticeShownVersion = n.version;
+    noticePopupBackdrop.classList.add('show');
+    const body = noticePopupBackdrop.querySelector('.notice-popup-body'); if(body) body.scrollTop = 0;
+  }
+  function closeNoticePopup(){ noticePopupBackdrop.classList.remove('show'); }
+  function applyNotice(){
+    const st = noticeStatus(currentNotice);
+    $('notice-header-btn').classList.toggle('show', st === 'on');
+    if(st !== 'on'){ closeNoticePopup(); return; }
+    const v = currentNotice.version;
+    if(v === noticeShownVersion || v === noticeSkipVersion || noticeHiddenToday(currentNotice)) return;
+    showNoticePopup();
+  }
+  $('notice-close').addEventListener('click', closeNoticePopup);
+  $('notice-hide-today').addEventListener('click', ()=>{
+    try{ if(currentNotice) localStorage.setItem(NOTICE_HIDE_KEY, JSON.stringify({ v: currentNotice.version, d: todayStr() })); }catch(e){}
+    closeNoticePopup();
+  });
+  noticePopupBackdrop.addEventListener('click', (e)=>{ if(e.target === noticePopupBackdrop) closeNoticePopup(); });
+  $('notice-header-btn').addEventListener('click', ()=>{ if(noticeStatus(currentNotice) === 'on') showNoticePopup(); });
+  onSnapshot(doc(db, 'meta', 'notice'), (snap)=>{
+    currentNotice = snap.exists() ? snap.data() : null;
+    applyNotice();
+  }, (err)=>{ console.error('notice listen error', err); });
+  // 날짜가 바뀌면 게시 기간/오늘 하루 숨김을 다시 판단
+  setInterval(applyNotice, 60000);
+
+  function renderNoticeEditState(){
+    const st = noticeStatus(currentNotice);
+    const el = $('notice-edit-state');
+    el.className = 'notice-state ' + (st === 'on' || st === 'scheduled' ? 'on' : 'off');
+    el.textContent = st === 'on' ? t('notice_state_on')
+      : st === 'scheduled' ? t('notice_state_scheduled').replace('{d}', fmtNoticeDate(currentNotice.startDate))
+      : st === 'expired' ? t('notice_state_expired') : t('notice_state_off');
+    const active = !!(currentNotice && currentNotice.active);
+    $('notice-off').style.display = active ? '' : 'none';
+    $('notice-save').textContent = active ? t('notice_update_btn') : t('notice_save_btn');
+  }
+  function openNoticeEdit(){
+    const n = currentNotice || {};
+    $('notice-title').value = n.title || '';
+    $('notice-body').value = n.body || '';
+    $('notice-start').value = n.startDate || '';
+    $('notice-end').value = n.endDate || '';
+    $('notice-edit-error').style.display = 'none';
+    ['notice-title','notice-body'].forEach(id=>$(id).closest('.field').classList.remove('field-invalid'));
+    renderNoticeEditState();
+    noticeEditBackdrop.classList.add('show');
+  }
+  function closeNoticeEdit(){ noticeEditBackdrop.classList.remove('show'); setActiveTab('dashboard'); }
+  function noticeError(msg){ const e = $('notice-edit-error'); e.textContent = '⚠ ' + msg; e.style.display = 'block'; }
+  $('mp-notice').addEventListener('click', ()=>{ managePanelBackdrop.classList.remove('show'); openNoticeEdit(); });
+  $('notice-edit-close').addEventListener('click', closeNoticeEdit);
+  noticeEditBackdrop.addEventListener('click', (e)=>{ if(e.target === noticeEditBackdrop) closeNoticeEdit(); });
+  $('notice-save').addEventListener('click', async ()=>{
+    const title = $('notice-title').value.trim();
+    const body = $('notice-body').value.trim();
+    const startDate = $('notice-start').value || '';
+    const endDate = $('notice-end').value || '';
+    $('notice-title').closest('.field').classList.toggle('field-invalid', !title);
+    $('notice-body').closest('.field').classList.toggle('field-invalid', !body);
+    if(!title || !body){ noticeError(t('notice_need_fields')); return; }
+    if(startDate && endDate && endDate < startDate){ noticeError(t('notice_bad_period')); return; }
+    $('notice-edit-error').style.display = 'none';
+    const btn = $('notice-save'); btn.disabled = true;
+    const now = Date.now();
+    const data = { title, body, startDate, endDate, active: true, updatedAt: now, version: String(now) };
+    noticeSkipVersion = data.version;
+    try{
+      await setDoc(doc(db, 'meta', 'notice'), data);
+      currentNotice = data; applyNotice();
+      showToast(t('notice_saved'));
+      closeNoticeEdit();
+    }catch(e){
+      console.error('notice save failed', e);
+      noticeError(t('action_failed'));
+    }finally{ btn.disabled = false; }
+  });
+  $('notice-off').addEventListener('click', async ()=>{
+    if(!confirm(t('notice_off_confirm'))) return;
+    const btn = $('notice-off'); btn.disabled = true;
+    try{
+      await setDoc(doc(db, 'meta', 'notice'), { active: false, updatedAt: Date.now() }, { merge:true });
+      if(currentNotice) currentNotice = { ...currentNotice, active:false };
+      applyNotice();
+      showToast(t('notice_off_done'));
+      closeNoticeEdit();
+    }catch(e){
+      console.error('notice off failed', e);
+      noticeError(t('action_failed'));
+    }finally{ btn.disabled = false; }
+  });
+
+  (function setupBackButton(){
+    let pushed = false, ignorePop = false;
+    // 화면이 열린 채로 새로고침하면 남아 있던 기록 한 칸 때문에 뒤로가기를 한 번 더 눌러야 했다 → 정리
+    if(history.state && history.state.safetyTopSheet){ ignorePop = true; try{ history.back(); }catch(e){ ignorePop = false; } }
+    const anyOpen = ()=> !!document.querySelector('.modal-backdrop.show, .photo-lightbox.show')
+      || [...document.querySelectorAll('.page-view')].some(e=>e.style.display === 'block')
+      || drawingArea || placing;
+    function sync(){
+      const open = anyOpen();
+      if(open && !pushed){ try{ history.pushState({ safetyTopSheet:1 }, ''); pushed = true; }catch(e){} }
+      else if(!open && pushed){ pushed = false; ignorePop = true; history.back(); }
+    }
+    let t1 = null;
+    new MutationObserver(()=>{ clearTimeout(t1); t1 = setTimeout(sync, 40); })
+      .observe(document.body, { subtree:true, attributes:true, attributeFilter:['class','style'] });
+    window.addEventListener('popstate', ()=>{
+      if(ignorePop){ ignorePop = false; return; }
+      if(!pushed) return;
+      pushed = false;
+      const lb = document.getElementById('photo-lightbox');
+      if(lb && lb.classList.contains('show')){ lb.click(); return; }
+      // 가장 위에 떠 있는 창부터 닫는다(z-index가 높은 것, 같으면 나중에 있는 것)
+      const modal = [...document.querySelectorAll('.modal-backdrop.show')]
+        .reduce((top, el)=>{ const z = parseInt(getComputedStyle(el).zIndex)||0; return (!top || z >= top.z) ? { el, z } : top; }, null)?.el;
+      if(modal){ const x = modal.querySelector('.modal-close-x'); if(x) x.click(); else modal.classList.remove('show'); return; }
+      if(drawingArea){ cancelAreaDrawing(); return; }
+      if(placing){ cancelPlacing(); returnToWorkFormAfterPlacing(null); return; }
+      if(workPage.style.display === 'block' && workFormDirty && !confirm(t('leave_form_confirm'))){
+        try{ history.pushState({ safetyTopSheet:1 }, ''); pushed = true; }catch(e){}
+        return;
+      }
+      workFormDirty = false;
+      closeAllPages();
+      setActiveTab('dashboard');
+    });
+  })();
+
   setAdminUI();
   applyI18n();
   init();
+  updatePastDateBanner();
 })();
 </script>
 
