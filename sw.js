@@ -16,7 +16,7 @@
 //   4) Firebase, 폰트(CDN) 등 외부 도메인 요청은 절대 가로채지 않는다 —
 //      실시간 데이터/외부 리소스 요청을 캐시 레이어가 방해하면 안 됨.
 
-const CACHE_NAME = 'safety-top-shell-v1';
+const CACHE_NAME = 'safety-top-shell-v3';
 const APP_SHELL_URL = self.registration.scope; // 이 서비스워커가 등록된 폴더의 index 문서
 
 self.addEventListener('install', (event) => {
@@ -46,11 +46,21 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // cache:'no-cache' — 브라우저 HTTP 캐시(GitHub Pages는 약 10분 캐시)에 남아 있는
+  // 예전 index.html을 그대로 쓰지 말고, 항상 서버에 "바뀐 게 있는지" 확인하게 한다.
+  // (새 버전을 올렸는데 한동안 예전 화면이 보이던 문제 방지)
   event.respondWith(
-    fetch(req)
+    fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' })
       .then((res) => {
-        const resClone = res.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(APP_SHELL_URL, resClone)).catch(() => {});
+        // 오프라인용으로는 "앱 화면(index.html)"만 저장한다. 다른 문서(PDF 등)나
+        // 오류 페이지(404 등)가 앱 화면 자리에 저장되지 않도록 확인한다.
+        const url = new URL(req.url);
+        const isAppPage = url.pathname === new URL(APP_SHELL_URL).pathname || url.pathname.endsWith('/index.html');
+        const isHtml = (res.headers.get('content-type') || '').includes('text/html');
+        if (res.ok && isHtml && isAppPage) {
+          const resClone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(APP_SHELL_URL, resClone)).catch(() => {});
+        }
         return res;
       })
       .catch(() => caches.match(APP_SHELL_URL))
