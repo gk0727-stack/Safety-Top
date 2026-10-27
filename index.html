@@ -422,6 +422,17 @@
   }
   .field input:focus, .field textarea:focus, .field select:focus{ outline:none; border-color:var(--accent); background:var(--panel); }
   .field textarea{ resize:vertical; min-height:60px; }
+  /* 작업등록 폼: 섹션 카드 */
+  .form-card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px 16px 4px; margin-bottom:14px; box-shadow:0 1px 2px rgba(16,24,40,.04); }
+  .form-card-title{ display:flex; align-items:center; gap:8px; margin:0 0 14px; font-size:15.5px; font-weight:800; color:var(--text); }
+  .form-card-title .fc-ico{ width:28px; height:28px; border-radius:8px; background:var(--accent-bg); display:inline-flex; align-items:center; justify-content:center; font-size:15px; }
+  #page-add-work{ background:var(--bg); }
+  #page-add-work .page-inner{ padding-bottom:0; }
+  #page-add-work .modal-actions{ position:sticky; bottom:0; margin:8px -20px 0; padding:10px 20px calc(10px + env(safe-area-inset-bottom)); background:var(--panel); border-top:1px solid var(--border); box-shadow:0 -4px 14px rgba(16,24,40,.08); z-index:5; }
+  #page-add-work .modal-actions .btn{ min-height:46px; font-size:15px; }
+  .status-choice button[data-status="in_progress"].on{ background:var(--accent-bg); border-color:var(--accent); color:var(--accent); }
+  .status-choice button[data-status="done"].on{ background:var(--low-bg); border-color:var(--low); color:var(--low); }
+  @media (max-height:500px){ #page-add-work .modal-actions{ position:static; box-shadow:none; border:0; padding:0; margin:8px 0 30px; } }
   .risk-choice{ display:flex; gap:8px; }
   .risk-choice button{
     flex:1; padding:12px 0; border-radius:8px; border:2px solid var(--border);
@@ -924,15 +935,11 @@
       <div class="work-continue-banner" id="work-continue-banner" style="display:none;"></div>
       <div class="form-date-banner" id="work-form-date"></div>
 
+      <section class="form-card"><h3 class="form-card-title"><span class="fc-ico">🏢</span><span data-i18n="fsec_basic">기본 정보</span></h3>
       <div class="field">
         <label><span data-i18n="label_company">업체 / 팀명</span> <span class="req-mark">*</span></label>
         <input type="text" id="f-company" placeholder="예: OO건설" data-i18n-placeholder="company_ph" list="company-datalist" autocomplete="off"><datalist id="company-datalist"></datalist>
         <div class="hint-text" id="company-import-hint" style="display:none; margin-top:6px; cursor:pointer; color:var(--accent); font-weight:600;"></div>
-      </div>
-
-      <div class="field">
-        <label><span data-i18n="label_people">투입 인원</span> <span class="req-mark">*</span></label>
-        <input type="number" id="f-people" min="1" step="1" inputmode="numeric" placeholder="예: 5" data-i18n-placeholder="people_ph">
       </div>
 
       <div class="field">
@@ -942,6 +949,8 @@
         <div id="worktype-suggest" style="display:none; margin-top:9px;"></div>
       </div>
 
+      </section>
+      <section class="form-card"><h3 class="form-card-title"><span class="fc-ico">📍</span><span data-i18n="fsec_where">작업 위치 · 상태</span></h3>
       <div class="field">
         <label><span data-i18n="label_location">위치</span> <span class="req-mark">*</span></label>
         <div class="loc-row">
@@ -970,6 +979,17 @@
       </div>
 
       <div class="field">
+        <label><span data-i18n="label_status">작업 상태</span> <span class="req-mark">*</span></label>
+        <div class="risk-choice status-choice" id="status-choice">
+          <button type="button" data-status="in_progress" data-i18n="status_inprogress">진행중</button>
+          <button type="button" data-status="done" data-i18n="status_done">완료</button>
+        </div>
+        <select id="f-status" style="display:none;">
+          <option value="in_progress" data-i18n="status_inprogress">진행중</option>
+          <option value="done" data-i18n="status_done">완료</option>
+        </select>
+      </div>
+      <div class="field">
         <label data-i18n="label_equipment">투입 장비 (선택)</label>
         <select id="f-equip-select"></select>
         <div class="equip-chip-list" id="f-equip-list" style="margin-top:8px;"></div>
@@ -978,12 +998,11 @@
         </div>
       </div>
 
+      </section>
+      <section class="form-card"><h3 class="form-card-title"><span class="fc-ico">👷</span><span data-i18n="fsec_people">인원 · 시간</span></h3>
       <div class="field">
-        <label><span data-i18n="label_status">작업 상태</span> <span class="req-mark">*</span></label>
-        <select id="f-status">
-          <option value="in_progress" data-i18n="status_inprogress">진행중</option>
-          <option value="done" data-i18n="status_done">완료</option>
-        </select>
+        <label><span data-i18n="label_people">투입 인원</span> <span class="req-mark">*</span></label>
+        <input type="number" id="f-people" min="1" step="1" inputmode="numeric" placeholder="예: 5" data-i18n-placeholder="people_ph">
       </div>
 
       <div class="field">
@@ -997,6 +1016,8 @@
         <div class="field"><label><span data-i18n="label_time_end">종료 시간</span> <span class="req-mark">*</span></label><input type="text" id="f-time-end" inputmode="numeric" placeholder="예: 18:00" data-i18n-placeholder="time_end_ph" maxlength="5" autocomplete="off"></div>
       </div>
 
+      </section>
+      <section class="form-card"><h3 class="form-card-title"><span class="fc-ico">🦺</span><span data-i18n="fsec_safety">책임자 · 안전조치</span></h3>
       <div class="field">
         <label><span data-i18n="label_supervisor">감시단 / 안전담당자</span> <span class="req-mark">*</span></label>
         <div class="staff-role-tabs" id="staff-role-tabs">
@@ -1011,6 +1032,7 @@
       </div>
       <div class="field"><label><span data-i18n="label_note">메모 (안전조치 등)</span> <span class="req-mark">*</span></label><textarea id="f-note" placeholder="예: 안전대 체결 확인, 신호수 배치" data-i18n-placeholder="note_ph"></textarea></div>
 
+      </section>
       <div class="hint-text" id="work-form-error" style="display:none; color:var(--high); font-weight:700; white-space:pre-line;"></div>
 
       <div class="modal-actions">
@@ -1549,6 +1571,7 @@ const db = getFirestore(fbApp);
       stat_low: "저위험 건수",
       back: "← 뒤로",
       work_add_title: "위험작업 등록",
+      fsec_basic:'기본 정보', fsec_where:'작업 위치 · 상태', fsec_people:'인원 · 시간', fsec_safety:'책임자 · 안전조치',
       save_continue_btn: "저장 후 이어서 등록", continue_banner: "✅ {n}건 저장됨 · 업체·담당자·시간은 그대로 두었습니다. 다음 작업을 입력하세요.", saved_continue: "✅ 저장되었습니다. 다음 작업을 이어서 입력하세요",
       pending_saved_hint: "📌 입력한 내용은 이 기기에 임시 보관되었습니다. 연결 후 홈 화면 위쪽 '다시 전송'을 누르면 보낼 수 있습니다.",
       conn_offline: "⚠ 인터넷 연결이 끊겼습니다. 화면 정보가 최신이 아닐 수 있습니다.", conn_offline_save: "저장한 내용은 이 화면을 닫지 않으면 연결 후 자동으로 전송됩니다.", conn_pending: "📤 전송되지 못한 작업 {n}건이 있습니다.",
@@ -1899,6 +1922,7 @@ const db = getFirestore(fbApp);
       stat_low: "低风险件数",
       back: "← 返回",
       work_add_title: "登记危险作业",
+      fsec_basic:'基本信息', fsec_where:'作业位置 · 状态', fsec_people:'人员 · 时间', fsec_safety:'负责人 · 安全措施',
       save_continue_btn: "保存并继续登记", continue_banner: "✅ 已保存 {n} 项 · 公司、负责人、时间保持不变，请输入下一项作业。", saved_continue: "✅ 已保存。请继续输入下一项作业",
       pending_saved_hint: "📌 输入的内容已临时保存在本设备。联网后点击首页顶部的“重新发送”即可发送。",
       conn_offline: "⚠ 网络已断开。屏幕信息可能不是最新的。", conn_offline_save: "只要不关闭本页面，已保存的内容会在联网后自动发送。", conn_pending: "📤 有 {n} 项作业尚未发送。",
@@ -2249,6 +2273,7 @@ const db = getFirestore(fbApp);
       stat_low: "Low-risk count",
       back: "← Back",
       work_add_title: "Register hazardous work",
+      fsec_basic:'Basic info', fsec_where:'Location · Status', fsec_people:'Crew · Time', fsec_safety:'Supervisors · Safety',
       save_continue_btn: "Save & add next", continue_banner: "✅ {n} saved · company, supervisors and time are kept. Enter the next work.", saved_continue: "✅ Saved. Enter the next work",
       pending_saved_hint: "📌 Your entries are kept on this device. After reconnecting, tap 'Resend' at the top of the home screen.",
       conn_offline: "⚠ You are offline. The screen may not be up to date.", conn_offline_save: "Saved entries are sent automatically after reconnecting if you keep this page open.", conn_pending: "📤 {n} work(s) have not been sent.",
@@ -6043,6 +6068,15 @@ const db = getFirestore(fbApp);
   document.querySelectorAll('.risk-choice button').forEach(btn=>{
     btn.addEventListener('click', ()=>{ selectedRisk = btn.dataset.risk; updateRiskButtons(); });
   });
+
+  (function(){
+    const sel = $('f-status'), box = $('status-choice'); if(!sel || !box) return;
+    const sync = ()=> box.querySelectorAll('button').forEach(b=> b.classList.toggle('on', b.dataset.status===sel.value));
+    const d = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value');
+    Object.defineProperty(sel,'value',{ get(){ return d.get.call(this); }, set(v){ d.set.call(this,v); sync(); }, configurable:true });
+    box.addEventListener('click', e=>{ const b=e.target.closest('button[data-status]'); if(!b) return; sel.value=b.dataset.status; sync(); });
+    sync();
+  })();
   function updateRiskButtons(){
     document.querySelectorAll('.risk-choice button').forEach(btn=> btn.classList.toggle('on', btn.dataset.risk===selectedRisk));
   }
