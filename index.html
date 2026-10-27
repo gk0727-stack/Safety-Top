@@ -350,6 +350,20 @@
     align-items:center; justify-content:center; z-index:100; padding:20px;
   }
   .modal-backdrop.show{ display:flex; }
+  /* 연결 상태 안내줄 */
+  .conn-banner{
+    flex:none; display:flex; align-items:center; justify-content:center; gap:8px 12px; flex-wrap:wrap;
+    background:#FEF3F2; color:#B42318; border-bottom:1px solid #FDA29B; padding:8px 14px; font-size:14px; font-weight:700; line-height:1.45; text-align:center;
+  }
+  .conn-banner .conn-actions{ display:inline-flex; gap:6px; }
+  @media (max-height:500px){ .conn-banner{ padding:4px 10px; font-size:13px; gap:4px 8px; } .conn-banner button{ min-height:30px; padding:3px 10px; font-size:13px; } }
+  .conn-banner button{ border:1px solid #B42318; background:#fff; color:#B42318; border-radius:8px; padding:6px 12px; font-size:14px; font-weight:800; min-height:36px; cursor:pointer; font-family:inherit; }
+  .conn-banner button.primary{ background:#B42318; color:#fff; }
+  /* 이어서 등록 안내 */
+  .work-continue-banner{ margin:-6px 0 14px; padding:9px 12px; border-radius:9px; background:var(--low-bg); color:var(--low); font-size:14px; font-weight:700; line-height:1.5; }
+  .modal-actions .btn.secondary-save{ background:var(--accent-bg); color:var(--accent); border-color:var(--accent-bg); }
+  /* 연결 진단 */
+  #diag-text{ width:100%; min-height:260px; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12.5px; line-height:1.55; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:10px; color:var(--text); resize:vertical; box-sizing:border-box; }
   /* 공지사항: 앱을 열면 다른 창보다 위에 뜬다 */
   #notice-popup-backdrop{ z-index:150; }
   #notice-popup-backdrop .notice-popup{ max-width:420px; padding:0; overflow:hidden; display:flex; flex-direction:column; max-height:min(80vh,620px); }
@@ -824,6 +838,13 @@
     </div>
   </div>
 
+  <div class="conn-banner" id="conn-banner" style="display:none;" role="status">
+    <span id="conn-banner-text"></span>
+    <span class="conn-actions" id="conn-banner-actions" style="display:none;">
+      <button type="button" class="primary" id="conn-resend" data-i18n="conn_resend_btn">다시 전송</button>
+      <button type="button" id="conn-discard" data-i18n="conn_discard_btn">삭제</button>
+    </span>
+  </div>
   <div class="weather-alert" id="weather-alert" style="display:none;"></div>
   <div class="past-date-banner" id="past-date-banner" style="display:none;"><span id="past-date-text"></span><button type="button" id="past-date-today" data-i18n="go_today_btn">오늘로 이동</button></div>
 
@@ -900,6 +921,7 @@
         <h2 id="modal-title">위험작업 등록</h2>
         <button type="button" class="btn" id="import-work-btn" style="margin-left:auto; white-space:nowrap;" data-i18n="import_work_btn">📥 가져오기</button>
       </div>
+      <div class="work-continue-banner" id="work-continue-banner" style="display:none;"></div>
       <div class="form-date-banner" id="work-form-date"></div>
 
       <div class="field">
@@ -989,10 +1011,11 @@
       </div>
       <div class="field"><label><span data-i18n="label_note">메모 (안전조치 등)</span> <span class="req-mark">*</span></label><textarea id="f-note" placeholder="예: 안전대 체결 확인, 신호수 배치" data-i18n-placeholder="note_ph"></textarea></div>
 
-      <div class="hint-text" id="work-form-error" style="display:none; color:var(--high); font-weight:700;"></div>
+      <div class="hint-text" id="work-form-error" style="display:none; color:var(--high); font-weight:700; white-space:pre-line;"></div>
 
       <div class="modal-actions">
         <button class="btn danger" id="delete-btn" style="display:none;" data-i18n="delete_btn">삭제</button>
+        <button class="btn secondary-save" id="save-continue-btn" type="button" data-i18n="save_continue_btn">저장 후 이어서 등록</button>
         <button class="btn primary" id="save-btn" data-i18n="save_btn">저장</button>
       </div>
     </div>
@@ -1020,6 +1043,11 @@
         <button class="btn export-btn" id="export-daily-btn" type="button" data-i18n="export_daily">일간</button>
         <button class="btn export-btn" id="export-weekly-btn" type="button" data-i18n="export_weekly">주간</button>
         <button class="btn export-btn" id="export-monthly-btn" type="button" data-i18n="export_monthly">월간</button>
+      </div>
+      <div class="export-row">
+        <span class="export-label" data-i18n="export_img_label">🖼️ 이미지 저장 (카톡 공유용)</span>
+        <button class="btn export-btn" id="export-img-all-btn" type="button" data-i18n="export_img_all">전체</button>
+        <button class="btn export-btn" id="export-img-high-btn" type="button" data-i18n="export_img_high">고위험만</button>
       </div>
       <div class="hint-text" id="export-status-text" style="display:none;"></div>
 
@@ -1177,6 +1205,20 @@
     <div class="field"><label data-i18n="label_name">이름</label><input type="text" id="zn-name" placeholder="예: A동 3층, 타워크레인 구역" data-i18n-placeholder="zone_name_ph"></div>
     <div class="modal-actions">
       <button class="btn primary" id="zn-save" style="width:100%;" data-i18n="save_btn">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 연결 진단 (관리자) -->
+<div class="modal-backdrop" id="diag-backdrop">
+  <div class="modal" style="max-width:520px;">
+    <button class="btn modal-close-x" id="diag-close">✕</button>
+    <h3 data-i18n="diag_title">🩺 연결 진단</h3>
+    <div class="hint-text" data-i18n="diag_hint" style="margin-bottom:8px;">등록이 안 되거나 화면이 이상할 때, 아래 내용을 복사해서 담당자에게 전달하세요.</div>
+    <textarea id="diag-text" readonly></textarea>
+    <div class="modal-actions" style="margin-top:10px; gap:8px;">
+      <button class="btn" id="diag-refresh" style="flex:1; justify-content:center;" data-i18n="diag_refresh">다시 확인</button>
+      <button class="btn primary" id="diag-copy" style="flex:1; justify-content:center;" data-i18n="diag_copy">복사</button>
     </div>
   </div>
 </div>
@@ -1373,6 +1415,7 @@
     <h3 data-i18n="manage_panel_title">🔧 관리자 패널</h3>
     <div class="mgmt-actions">
       <button class="btn" id="mp-upload-map" data-i18n="mp_upload_map">🛰️&nbsp; 지도 업로드 / 교체</button>
+      <button class="btn" id="mp-diag" data-i18n="mp_diag">🩺&nbsp; 연결 진단 / 오류 확인</button>
       <button class="btn" id="mp-notice" data-i18n="mp_notice">📢&nbsp; 공지사항 관리</button>
       <button class="btn" id="mp-manage-zones" data-i18n="mp_manage_zones">📍&nbsp; 위치(구역) 관리</button>
       <button class="btn" id="mp-manage-staff" data-i18n="mp_manage_staff">👷&nbsp; 담당자 관리</button>
@@ -1430,6 +1473,21 @@ const db = getFirestore(fbApp);
 
 (function(){
   const $ = (id) => document.getElementById(id);
+
+  // 최근 오류를 20개까지 기억해 두었다가 관리자 "연결 진단"에서 보여준다(담당자에게 전달용)
+  const APP_VERSION = '2026-10-27';
+  const recentErrors = [];
+  function noteError(msg){
+    try{
+      const d = new Date();
+      recentErrors.push(`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')} ${String(msg).slice(0,300)}`);
+      if(recentErrors.length > 20) recentErrors.shift();
+    }catch(e){}
+  }
+  { const origErr = console.error.bind(console);
+    console.error = function(...a){ noteError(a.map(x=> (x && x.message) ? x.message : (typeof x === 'string' ? x : (()=>{ try{ return JSON.stringify(x); }catch(e){ return String(x); } })())).join(' ')); origErr(...a); }; }
+  window.addEventListener('error', (e)=> noteError('error: ' + (e.message || '') + (e.filename ? ' @' + String(e.filename).split('/').pop() + ':' + e.lineno : '')));
+  window.addEventListener('unhandledrejection', (e)=> noteError('promise: ' + ((e.reason && e.reason.message) || e.reason)));
 
   const mapWrap = $('map-wrap');
   const mapViewportEl = document.querySelector('.map-viewport');
@@ -1491,6 +1549,13 @@ const db = getFirestore(fbApp);
       stat_low: "저위험 건수",
       back: "← 뒤로",
       work_add_title: "위험작업 등록",
+      save_continue_btn: "저장 후 이어서 등록", continue_banner: "✅ {n}건 저장됨 · 업체·담당자·시간은 그대로 두었습니다. 다음 작업을 입력하세요.", saved_continue: "✅ 저장되었습니다. 다음 작업을 이어서 입력하세요",
+      pending_saved_hint: "📌 입력한 내용은 이 기기에 임시 보관되었습니다. 연결 후 홈 화면 위쪽 '다시 전송'을 누르면 보낼 수 있습니다.",
+      conn_offline: "⚠ 인터넷 연결이 끊겼습니다. 화면 정보가 최신이 아닐 수 있습니다.", conn_offline_save: "저장한 내용은 이 화면을 닫지 않으면 연결 후 자동으로 전송됩니다.", conn_pending: "📤 전송되지 못한 작업 {n}건이 있습니다.",
+      conn_resend_btn: "다시 전송", conn_discard_btn: "삭제", conn_restored: "✅ 연결되었습니다", conn_resend_ok: "✅ {n}건을 전송했습니다", conn_resend_fail: "❌ {n}건을 전송하지 못했습니다. 연결을 확인해주세요.", conn_discard_confirm: "전송되지 못한 작업을 삭제합니다. 삭제하면 복구할 수 없습니다. 삭제할까요?", conn_discarded: "삭제했습니다",
+      mp_diag: "🩺\u00a0 연결 진단 / 오류 확인", diag_title: "🩺 연결 진단", diag_hint: "등록이 안 되거나 화면이 이상할 때, 아래 내용을 복사해서 담당자에게 전달하세요.", diag_refresh: "다시 확인", diag_copy: "복사", diag_copied: "✅ 복사했습니다", diag_copy_fail: "복사하지 못했습니다. 글을 길게 눌러 직접 복사해주세요.", diag_checking: "서버 응답 확인 중…",
+      export_img_label: "🖼️ 이미지 저장 (카톡 공유용)", export_img_all: "전체", export_img_high: "고위험만", export_img_making: "이미지를 만드는 중…", export_img_nomap: "현장 지도가 없어 이미지를 만들 수 없습니다.", export_img_nodata: "이 날짜에 내보낼 작업이 없습니다.", export_img_done: "✅ 이미지를 저장했습니다", export_img_error: "이미지를 만들지 못했습니다. 다시 시도해주세요.",
+      img_stat_people: "출력인원", img_stat_works: "작업 건수", img_stat_high: "고위험", img_stat_vul: "취약근로자", img_list_title: "작업 목록", img_more: "외 {n}건은 앱에서 확인하세요", img_unplaced: "지도에 위치가 없는 작업 {n}건", img_only_high: "고위험 작업만", img_site_default: "현장", img_pins_note: "핀 숫자 = 투입 인원 · 색 = 업체 · 검은 핀 = 같은 자리에 겹친 작업 건수",
     mp_notice: "📢\u00a0 공지사항 관리", notice_header_btn: "공지사항", notice_popup_head: "공지사항", notice_hide_today: "오늘 하루 보지 않기", notice_close: "확인",
     notice_edit_title: "📢 공지사항 관리", notice_label_title: "제목", notice_label_body: "내용", notice_label_period: "게시 기간 (선택)",
     notice_title_ph: "예: 내일 오전 타워크레인 정기점검", notice_body_ph: "근로자에게 알릴 내용을 입력하세요", notice_period_hint: "비워두면 '공지 내리기'를 누를 때까지 계속 표시됩니다.",
@@ -1834,6 +1899,13 @@ const db = getFirestore(fbApp);
       stat_low: "低风险件数",
       back: "← 返回",
       work_add_title: "登记危险作业",
+      save_continue_btn: "保存并继续登记", continue_banner: "✅ 已保存 {n} 项 · 公司、负责人、时间保持不变，请输入下一项作业。", saved_continue: "✅ 已保存。请继续输入下一项作业",
+      pending_saved_hint: "📌 输入的内容已临时保存在本设备。联网后点击首页顶部的“重新发送”即可发送。",
+      conn_offline: "⚠ 网络已断开。屏幕信息可能不是最新的。", conn_offline_save: "只要不关闭本页面，已保存的内容会在联网后自动发送。", conn_pending: "📤 有 {n} 项作业尚未发送。",
+      conn_resend_btn: "重新发送", conn_discard_btn: "删除", conn_restored: "✅ 已连接", conn_resend_ok: "✅ 已发送 {n} 项", conn_resend_fail: "❌ {n} 项发送失败。请检查网络。", conn_discard_confirm: "将删除未发送的作业，删除后无法恢复。确定删除吗？", conn_discarded: "已删除",
+      mp_diag: "🩺\u00a0 连接诊断 / 错误查看", diag_title: "🩺 连接诊断", diag_hint: "无法登记或画面异常时，请复制下面的内容发给负责人。", diag_refresh: "重新检查", diag_copy: "复制", diag_copied: "✅ 已复制", diag_copy_fail: "复制失败。请长按文字手动复制。", diag_checking: "正在检查服务器响应…",
+      export_img_label: "🖼️ 保存图片（用于微信/KakaoTalk分享）", export_img_all: "全部", export_img_high: "仅高风险", export_img_making: "正在生成图片…", export_img_nomap: "没有现场地图，无法生成图片。", export_img_nodata: "该日期没有可导出的作业。", export_img_done: "✅ 图片已保存", export_img_error: "生成图片失败，请重试。",
+      img_stat_people: "出勤人数", img_stat_works: "作业数", img_stat_high: "高风险", img_stat_vul: "弱势工人", img_list_title: "作业列表", img_more: "其余 {n} 项请在应用中查看", img_unplaced: "地图上无位置的作业 {n} 项", img_only_high: "仅高风险作业", img_site_default: "现场", img_pins_note: "图钉数字 = 投入人数 · 颜色 = 公司 · 黑色图钉 = 同一位置重叠的作业数",
     mp_notice: "📢\u00a0 公告管理", notice_header_btn: "公告", notice_popup_head: "公告", notice_hide_today: "今天不再显示", notice_close: "确认",
     notice_edit_title: "📢 公告管理", notice_label_title: "标题", notice_label_body: "内容", notice_label_period: "发布期间（可选）",
     notice_title_ph: "例：明天上午塔吊定期检查", notice_body_ph: "请输入要通知工人的内容", notice_period_hint: "留空则一直显示，直到点击“撤下公告”。",
@@ -2177,6 +2249,13 @@ const db = getFirestore(fbApp);
       stat_low: "Low-risk count",
       back: "← Back",
       work_add_title: "Register hazardous work",
+      save_continue_btn: "Save & add next", continue_banner: "✅ {n} saved · company, supervisors and time are kept. Enter the next work.", saved_continue: "✅ Saved. Enter the next work",
+      pending_saved_hint: "📌 Your entries are kept on this device. After reconnecting, tap 'Resend' at the top of the home screen.",
+      conn_offline: "⚠ You are offline. The screen may not be up to date.", conn_offline_save: "Saved entries are sent automatically after reconnecting if you keep this page open.", conn_pending: "📤 {n} work(s) have not been sent.",
+      conn_resend_btn: "Resend", conn_discard_btn: "Delete", conn_restored: "✅ Connected", conn_resend_ok: "✅ Sent {n}", conn_resend_fail: "❌ Could not send {n}. Check your connection.", conn_discard_confirm: "This deletes the unsent works and cannot be undone. Delete them?", conn_discarded: "Deleted",
+      mp_diag: "🩺\u00a0 Connection diagnostics", diag_title: "🩺 Connection diagnostics", diag_hint: "If saving fails or the screen looks wrong, copy the text below and send it to the person in charge.", diag_refresh: "Check again", diag_copy: "Copy", diag_copied: "✅ Copied", diag_copy_fail: "Could not copy. Long-press the text to copy it.", diag_checking: "Checking server response…",
+      export_img_label: "🖼️ Save as image (for sharing)", export_img_all: "All", export_img_high: "High risk only", export_img_making: "Creating image…", export_img_nomap: "No site map, so an image cannot be created.", export_img_nodata: "No works to export for this date.", export_img_done: "✅ Image saved", export_img_error: "Could not create the image. Please try again.",
+      img_stat_people: "Workers", img_stat_works: "Works", img_stat_high: "High risk", img_stat_vul: "Vulnerable", img_list_title: "Work list", img_more: "+{n} more in the app", img_unplaced: "{n} work(s) without a map location", img_only_high: "High-risk works only", img_site_default: "Site", img_pins_note: "Pin number = workers · color = company · black pin = number of overlapping works",
     mp_notice: "📢\u00a0 Notice", notice_header_btn: "Notice", notice_popup_head: "Notice", notice_hide_today: "Don't show today", notice_close: "OK",
     notice_edit_title: "📢 Manage notice", notice_label_title: "Title", notice_label_body: "Message", notice_label_period: "Display period (optional)",
     notice_title_ph: "e.g. Tower crane inspection tomorrow morning", notice_body_ph: "Message for workers", notice_period_hint: "If empty, shown until you take it down.",
@@ -2551,6 +2630,8 @@ const db = getFirestore(fbApp);
     safeCall(typeof updatePastDateBanner === 'function' ? updatePastDateBanner : null);
     safeCall(typeof applyReportTypeUI === 'function' ? applyReportTypeUI : null);
     safeCall(typeof renderReportList === 'function' ? renderReportList : null);
+    safeCall(typeof updateContinueUI === 'function' ? updateContinueUI : null);
+    safeCall(typeof renderConnBanner === 'function' ? renderConnBanner : null);
   }
 
   function setLanguage(lang){
@@ -5031,6 +5112,46 @@ const db = getFirestore(fbApp);
     if(mapImageURL) requestAnimationFrame(()=>{ try{ renderAllPins(); }catch(e){} });
   }
   let workFormMode = 'add'; // 'add' | 'edit' | 'copy'
+  let continueSavedCount = 0; // "저장 후 이어서 등록"으로 이 화면에서 저장한 건수
+  function updateContinueUI(){
+    const btn = $('save-continue-btn');
+    if(btn) btn.style.display = (workFormMode === 'edit') ? 'none' : '';
+    const b = $('work-continue-banner');
+    if(b){
+      if(continueSavedCount > 0 && workFormMode !== 'edit'){ b.textContent = t('continue_banner').replace('{n}', continueSavedCount); b.style.display = 'block'; }
+      else b.style.display = 'none';
+    }
+  }
+  // 저장한 뒤 화면을 닫지 않고, 업체·관리감독자·시간은 남긴 채 나머지만 비워서 다음 작업을 바로 입력하게 한다
+  function continueRegistration(){
+    continueSavedCount++;
+    newWorkDocId = null;
+    editingId = null;
+    workFormMode = 'add';
+    updateWorkFormTitle();
+    updateWorkFormDateBanner();
+    document.querySelectorAll('#page-add-work .field-invalid').forEach(el=>el.classList.remove('field-invalid'));
+    $('f-worktype').value = '';
+    $('f-people').value = '';
+    $('f-vulnerable').value = '';
+    $('f-note').value = '';
+    loadEquipmentIntoForm([]);
+    populateZoneSelect(null, '');
+    selectedRisk = 'high';
+    updateRiskButtons();
+    $('f-status').value = 'in_progress';
+    pendingAreas = [];
+    updateAreaStatusText();
+    $('delete-btn').style.display = 'none';
+    $('work-form-error').style.display = 'none';
+    updateWorktypeSuggestions();
+    updateContinueUI();
+    const importBtnEl = $('import-work-btn'); if(importBtnEl) importBtnEl.style.display = '';
+    workFormDirty = false;
+    showToast(t('saved_continue'));
+    const pv = $('page-add-work'); if(pv) pv.scrollTop = 0;
+    setTimeout(()=>{ try{ $('f-worktype').focus({ preventScroll:true }); }catch(e){} }, 50);
+  }
   let newWorkDocId = null;
   let workSaveSeq = 0;
   let workFormDirty = false; // 작업등록 화면에 사용자가 뭔가 입력했는지 (나갈 때 확인용)
@@ -5115,6 +5236,8 @@ const db = getFirestore(fbApp);
     { const sb = $('save-btn'); sb.disabled = false; sb.textContent = t('save_btn'); } // 새 작업의 문서 ID는 첫 저장 시 한 번만 만들고, 재시도 때도 같은 ID를 쓴다
     const m = duplicateFrom ? markers.find(x=>x.id===duplicateFrom) : (id ? markers.find(x=>x.id===id) : null);
     workFormMode = duplicateFrom ? 'copy' : (m ? 'edit' : 'add');
+    continueSavedCount = 0;
+    updateContinueUI();
     updateWorkFormTitle();
     updateWorkFormDateBanner();
     // 전날 작업 가져오기는 새로 등록할 때만 의미가 있어서, 기존 작업을 수정할 때는 숨긴다
@@ -5377,7 +5500,7 @@ const db = getFirestore(fbApp);
 
     // 위험도 → 협력업체 → 시작시간 순 (같은 업체 작업이 붙어서 보이도록)
     filtered.sort((a,b)=> riskRank(a.risk)-riskRank(b.risk)
-      || (a.company||' ').localeCompare(b.company||' ')
+      || (a.company||'￿').localeCompare(b.company||'￿')
       || (a.time||'').localeCompare(b.time||''));
 
     const table = document.createElement('div');
@@ -5550,6 +5673,270 @@ const db = getFirestore(fbApp);
   $('export-weekly-btn').addEventListener('click', ()=> exportWorksExcel('weekly'));
   $('export-monthly-btn').addEventListener('click', ()=> exportWorksExcel('monthly'));
 
+  // ---------------- 이미지(PNG) 내보내기 (카카오톡 등으로 바로 공유) ----------------
+  // 홈 화면과 같은 현황(지도 + 핀 + 요약 + 작업 목록)을 한 장의 그림으로 만든다.
+  // 별도 라이브러리 없이 canvas로 직접 그리므로 인터넷이 느려도 동작한다.
+  function loadImageEl(src){
+    return new Promise((res, rej)=>{ const im = new Image(); im.onload = ()=>res(im); im.onerror = ()=>rej(new Error('image load')); im.src = src; });
+  }
+  function canvasEllipsize(ctx, text, maxW){
+    text = String(text || '');
+    if(ctx.measureText(text).width <= maxW) return text;
+    let lo = 0, hi = text.length;
+    while(lo < hi){ const mid = Math.ceil((lo + hi) / 2); if(ctx.measureText(text.slice(0, mid) + '…').width <= maxW) lo = mid; else hi = mid - 1; }
+    return text.slice(0, lo) + '…';
+  }
+  function canvasRoundRect(ctx, x, y, w, h, r){
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+  // 지도 위 핀 자리 계산: 겹치면 동그랗게 펼치고, 너무 많이 겹치면 "N건" 묶음 핀 하나로 합친다(홈 화면과 같은 방식)
+  function layoutImagePins(list, MW, MH){
+    const S = Math.max(34, Math.min(46, MW * 0.042));
+    let items = [];
+    let unplaced = 0;
+    list.forEach(m=>{
+      const areasM = getMarkerAreas(m);
+      const zone = zones.find(z=>z.id === m.zoneId);
+      const pts = [];
+      if(areasM.length) areasM.forEach(a=>pts.push([(a.x1 + a.x2) / 2, (a.y1 + a.y2) / 2]));
+      else if(zone) pts.push([zone.xPct, zone.yPct]);
+      if(!pts.length){ unplaced++; return; }
+      pts.forEach(([px, py])=>{ const x = px / 100 * MW, y = py / 100 * MH; items.push({ ox:x, oy:y, x, y, s:S, works:[m] }); });
+    });
+    const clampX = (v)=>Math.min(MW - S / 2, Math.max(S / 2, v));
+    const clampY = (v)=>Math.min(MH - S / 2, Math.max(S / 2, v));
+    const CLUSTER_MIN = 5;
+    for(let pass = 0; pass < 20; pass++){
+      const used = new Set(); const next = []; let changed = false;
+      for(let i = 0; i < items.length; i++){
+        if(used.has(i)) continue;
+        const group = [i]; used.add(i);
+        for(let gi = 0; gi < group.length; gi++){
+          const a = items[group[gi]];
+          for(let j = 0; j < items.length; j++){
+            if(used.has(j)) continue;
+            const b = items[j];
+            if(Math.hypot(a.x - b.x, a.y - b.y) < Math.min(a.s, b.s) * 0.95){ group.push(j); used.add(j); }
+          }
+        }
+        const g = group.map(k=>items[k]);
+        if(g.length === 1){ next.push(g[0]); continue; }
+        changed = true;
+        const all = g.flatMap(q=>q.works);
+        const cx = g.reduce((acc, q)=>acc + q.ox * q.works.length, 0) / all.length;
+        const cy = g.reduce((acc, q)=>acc + q.oy * q.works.length, 0) / all.length;
+        const canSpread = all.length < CLUSTER_MIN && !g.some(q=>q.cluster) && pass < 3;
+        if(!canSpread){
+          next.push({ ox:cx, oy:cy, x:clampX(cx), y:clampY(cy), s:S * 1.1, works:all, cluster:true });
+        } else {
+          const r = Math.max(S * 0.75, S * 1.05 / (2 * Math.sin(Math.PI / all.length)));
+          g.forEach((q, k)=>{
+            const ang = (2 * Math.PI * k / g.length) - Math.PI / 2;
+            next.push({ ox:cx, oy:cy, x:clampX(cx + r * Math.cos(ang)), y:clampY(cy + r * Math.sin(ang)), s:q.s, works:q.works });
+          });
+        }
+      }
+      items = next;
+      if(!changed) break;
+    }
+    return { items, unplaced };
+  }
+
+  function buildDashboardCanvas(mapImg, list, onlyHigh){
+    const W = 1080, PAD = 40, MW = W - PAD * 2;
+    const MH = Math.round(MW * mapImg.naturalHeight / mapImg.naturalWidth);
+    const FONT = getComputedStyle(document.body).fontFamily || 'sans-serif';
+    const RISK_COLOR = { high:'#E5484D', mid:'#E8930C', low:'#2E9E5B' };
+    const sorted = list.slice().sort((a, b)=> riskRank(a.risk) - riskRank(b.risk) || (a.company || '').localeCompare(b.company || '', 'ko'));
+    const MAX_ROWS = 30, ROW_H = 76;
+    const rows = sorted.slice(0, MAX_ROWS);
+    const moreCount = sorted.length - rows.length;
+    const { items: pins, unplaced } = layoutImagePins(sorted, MW, MH);
+    // 업체 범례(이 화면에 나온 업체만)
+    const companyCount = new Map();
+    sorted.forEach(m=>{ const c = m.company || ''; if(c) companyCount.set(c, (companyCount.get(c) || 0) + 1); });
+    const tmp = document.createElement('canvas').getContext('2d');
+    tmp.font = `700 22px ${FONT}`;
+    const legendItems = [...companyCount.entries()].map(([name, n])=>{ const label = canvasEllipsize(tmp, `${name} ${n}`, MW - 60); return { name, n, label, w: tmp.measureText(label).width + 44 }; });
+    const legendLines = []; { let cur = [], curW = 0; legendItems.forEach(it=>{ if(curW + it.w > MW && cur.length){ legendLines.push(cur); cur = []; curW = 0; } cur.push(it); curW += it.w + 10; }); if(cur.length) legendLines.push(cur); }
+    const HEADER_H = 170, STATS_H = 130, LEGEND_LINE_H = 40;
+    const legendH = legendLines.length * LEGEND_LINE_H + 56 + (unplaced ? 34 : 0);
+    const listTitleH = 70;
+    const FOOT_H = 70 + (moreCount > 0 ? 56 : 0);
+    const H = HEADER_H + STATS_H + MH + legendH + listTitleH + rows.length * ROW_H + FOOT_H + 20;
+    const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    ctx.textBaseline = 'alphabetic';
+    // 바탕
+    ctx.fillStyle = '#F4F6F9'; ctx.fillRect(0, 0, W, H);
+    // 머리말
+    ctx.fillStyle = '#1D4ED8'; ctx.fillRect(0, 0, W, HEADER_H);
+    ctx.fillStyle = 'rgba(255,255,255,0.78)'; ctx.font = `700 26px ${FONT}`; ctx.fillText('Safety-Top', PAD, 52);
+    ctx.fillStyle = '#fff'; ctx.font = `800 44px ${FONT}`;
+    ctx.fillText(canvasEllipsize(ctx, siteNameFromRemote || t('img_site_default'), MW), PAD, 106);
+    const dObj = new Date(currentDate + 'T00:00:00');
+    const locale = LANG === 'en' ? 'en-US' : LANG === 'zh' ? 'zh-CN' : 'ko-KR';
+    let dateText = dObj.toLocaleDateString(locale, { year:'numeric', month:'long', day:'numeric', weekday:'short' });
+    if(onlyHigh) dateText += ' · ' + t('img_only_high');
+    ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.font = `600 28px ${FONT}`; ctx.fillText(canvasEllipsize(ctx, dateText, MW), PAD, 148);
+    // 요약 4칸
+    const sumPeople = sorted.reduce((a, m)=>a + (Number(m.people) || 0), 0);
+    const sumVul = sorted.reduce((a, m)=>a + (Number(m.vulnerable) || 0), 0);
+    const highCnt = sorted.filter(m=>m.risk === 'high').length;
+    const stats = [
+      [t('img_stat_people'), String(sumPeople), '#111827'],
+      [t('img_stat_works'), String(sorted.length), '#111827'],
+      [t('img_stat_high'), String(highCnt), '#E5484D'],
+      [t('img_stat_vul'), String(sumVul), '#B45309']
+    ];
+    const boxW = (MW - 3 * 14) / 4;
+    stats.forEach(([label, val, color], i)=>{
+      const x = PAD + i * (boxW + 14), y = HEADER_H + 20;
+      ctx.fillStyle = '#fff'; canvasRoundRect(ctx, x, y, boxW, 92, 14); ctx.fill();
+      ctx.fillStyle = color; ctx.font = `800 40px ${FONT}`; ctx.textAlign = 'center'; ctx.fillText(val, x + boxW / 2, y + 50);
+      ctx.fillStyle = '#6B7280'; ctx.font = `600 20px ${FONT}`; ctx.fillText(label, x + boxW / 2, y + 79);
+      ctx.textAlign = 'left';
+    });
+    // 지도
+    const MX = PAD, MY = HEADER_H + STATS_H;
+    ctx.save(); canvasRoundRect(ctx, MX, MY, MW, MH, 14); ctx.clip();
+    ctx.drawImage(mapImg, MX, MY, MW, MH);
+    // 작업 범위(빨간 사각형)
+    sorted.forEach(m=>{
+      getMarkerAreas(m).forEach(a=>{
+        const x = MX + Math.min(a.x1, a.x2) / 100 * MW, y = MY + Math.min(a.y1, a.y2) / 100 * MH;
+        const w = Math.abs(a.x2 - a.x1) / 100 * MW, h = Math.abs(a.y2 - a.y1) / 100 * MH;
+        ctx.fillStyle = m.status === 'done' ? 'rgba(46,158,91,0.14)' : 'rgba(229,72,77,0.16)'; ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = m.status === 'done' ? '#2E9E5B' : '#E5484D'; ctx.lineWidth = 2.5; ctx.strokeRect(x, y, w, h);
+      });
+    });
+    // 핀
+    pins.forEach(q=>{
+      const cx = MX + q.x, cy = MY + q.y, r = q.s / 2;
+      const w0 = q.works[0];
+      const color = q.cluster ? '#1F2937' : companyColor(w0.company);
+      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill(); ctx.restore();
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.lineWidth = 3.5; ctx.strokeStyle = '#fff'; ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `800 ${Math.round(r * 0.95)}px ${FONT}`;
+      const uniq = [...new Set(q.works.map(m=>m.id))].length;
+      ctx.fillText(q.cluster ? `${uniq}` : String(Number(w0.people) || 0), cx, cy + r * 0.34);
+      const hasHigh = q.works.some(m=>m.risk === 'high' && m.status !== 'done');
+      const allDone = q.works.every(m=>m.status === 'done');
+      if(hasHigh || allDone){
+        const bx = cx + r * 0.75, by = cy - r * 0.75, br = Math.max(9, r * 0.36);
+        ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI * 2); ctx.fillStyle = hasHigh ? '#E5484D' : '#2E9E5B'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.6; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        if(hasHigh){ ctx.moveTo(bx, by - br * 0.45); ctx.lineTo(bx, by + br * 0.1); ctx.moveTo(bx, by + br * 0.45); ctx.lineTo(bx, by + br * 0.46); }
+        else { ctx.moveTo(bx - br * 0.45, by); ctx.lineTo(bx - br * 0.1, by + br * 0.38); ctx.lineTo(bx + br * 0.48, by - br * 0.36); }
+        ctx.stroke();
+      }
+      ctx.textAlign = 'left';
+    });
+    ctx.restore();
+    // 범례
+    let ly = MY + MH + 16;
+    ctx.font = `700 22px ${FONT}`;
+    legendLines.forEach(line=>{
+      let lx = PAD;
+      line.forEach(it=>{
+        ctx.beginPath(); ctx.arc(lx + 11, ly + 17, 10, 0, Math.PI * 2); ctx.fillStyle = companyColor(it.name); ctx.fill();
+        ctx.fillStyle = '#374151'; ctx.fillText(it.label, lx + 30, ly + 25);
+        lx += it.w + 10;
+      });
+      ly += LEGEND_LINE_H;
+    });
+    ctx.fillStyle = '#6B7280'; ctx.font = `600 20px ${FONT}`;
+    ctx.fillText(t('img_pins_note'), PAD, ly + 20);
+    if(unplaced){ ctx.fillStyle = '#B45309'; ctx.fillText(t('img_unplaced').replace('{n}', unplaced), PAD, ly + 20 + 30); }
+    // 작업 목록
+    let y0 = MY + MH + legendH;
+    ctx.fillStyle = '#111827'; ctx.font = `800 32px ${FONT}`; ctx.fillText(`${t('img_list_title')} (${sorted.length})`, PAD, y0 + 38);
+    y0 += listTitleH;
+    rows.forEach((m, i)=>{
+      const y = y0 + i * ROW_H;
+      const done = m.status === 'done';
+      ctx.fillStyle = '#fff'; canvasRoundRect(ctx, PAD, y, MW, ROW_H - 10, 12); ctx.fill();
+      ctx.fillStyle = done ? '#9CA3AF' : (RISK_COLOR[m.risk] || '#9CA3AF'); canvasRoundRect(ctx, PAD, y, 12, ROW_H - 10, 6); ctx.fill();
+      // 위험도 / 상태 표시
+      const tag = `${riskLabel(m.risk)}`;
+      ctx.font = `800 20px ${FONT}`; const tagW = ctx.measureText(tag).width + 22;
+      ctx.fillStyle = done ? '#E5E7EB' : (m.risk === 'high' ? '#FDE2E2' : m.risk === 'mid' ? '#FCEFD8' : '#DDF3E6');
+      canvasRoundRect(ctx, PAD + 28, y + 12, tagW, 30, 8); ctx.fill();
+      ctx.fillStyle = done ? '#6B7280' : (RISK_COLOR[m.risk] || '#6B7280'); ctx.fillText(tag, PAD + 28 + 11, y + 34);
+      const stTxt = done ? t('status_done') : t('status_inprogress');
+      ctx.font = `700 20px ${FONT}`; const stW = ctx.measureText(stTxt).width;
+      ctx.fillStyle = done ? '#2E9E5B' : '#1D4ED8'; ctx.textAlign = 'right'; ctx.fillText(stTxt, PAD + MW - 20, y + 34); ctx.textAlign = 'left';
+      // 작업명
+      ctx.fillStyle = done ? '#6B7280' : '#111827'; ctx.font = `800 26px ${FONT}`;
+      const titleX = PAD + 28 + tagW + 14;
+      ctx.fillText(canvasEllipsize(ctx, m.workType || '-', PAD + MW - 20 - stW - 16 - titleX), titleX, y + 36);
+      // 보조 정보
+      ctx.fillStyle = '#6B7280'; ctx.font = `600 21px ${FONT}`;
+      const sub = [workLocName(m), m.company, `${Number(m.people) || 0}${t('unit_people')}`, m.time].filter(Boolean).join(' · ');
+      ctx.fillText(canvasEllipsize(ctx, sub, MW - 56), PAD + 28, y + 62);
+    });
+    let fy = y0 + rows.length * ROW_H;
+    if(moreCount > 0){ ctx.fillStyle = '#6B7280'; ctx.font = `700 22px ${FONT}`; ctx.textAlign = 'center'; ctx.fillText(t('img_more').replace('{n}', moreCount), W / 2, fy + 34); ctx.textAlign = 'left'; fy += 56; }
+    const now = new Date();
+    ctx.fillStyle = '#9CA3AF'; ctx.font = `600 20px ${FONT}`; ctx.textAlign = 'center';
+    ctx.fillText(`Safety-Top · ${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`, W / 2, fy + 36);
+    ctx.textAlign = 'left';
+    return canvas;
+  }
+
+  async function exportDashboardImage(onlyHigh){
+    const statusEl = $('export-status-text');
+    const say = (msg, isErr)=>{ statusEl.style.display = 'block'; statusEl.style.color = isErr ? 'var(--high)' : ''; statusEl.textContent = msg; };
+    if(!mapImageURL){ say(t('export_img_nomap'), true); return; }
+    const list = markers.filter(m=>!onlyHigh || m.risk === 'high');
+    if(!list.length){ say(t('export_img_nodata'), true); return; }
+    const btns = [$('export-img-all-btn'), $('export-img-high-btn')];
+    btns.forEach(b=>b.disabled = true);
+    say(t('export_img_making'));
+    try{
+      const img = await loadImageEl(mapImageURL);
+      let canvas = buildDashboardCanvas(img, list, onlyHigh);
+      // 지도가 아주 길쭉하면 그림이 너무 커서(특히 아이폰) 만들어지지 않으므로, 크기가 크면 비율을 유지한 채 줄인다
+      const MAX_PIXELS = 12e6;
+      if(canvas.width * canvas.height > MAX_PIXELS){
+        const k = Math.sqrt(MAX_PIXELS / (canvas.width * canvas.height));
+        const small = document.createElement('canvas'); small.width = Math.floor(canvas.width * k); small.height = Math.floor(canvas.height * k);
+        small.getContext('2d').drawImage(canvas, 0, 0, small.width, small.height);
+        canvas = small;
+      }
+      const blob = await new Promise((res, rej)=> canvas.toBlob(b=> b ? res(b) : rej(new Error('toBlob')), 'image/png'));
+      const siteLabel = (siteNameFromRemote || 'SafetyTop').replace(/[\\/:*?"<>|\s]+/g, '');
+      const fileName = `${siteLabel}_현황_${currentDate}${onlyHigh ? '_고위험' : ''}.png`;
+      // 휴대폰에서는 공유 창(카카오톡 등)을 바로 열고, 안 되면 파일로 저장한다
+      let shared = false;
+      try{
+        const file = new File([blob], fileName, { type:'image/png' });
+        if(mobileLayoutQuery.matches && navigator.canShare && navigator.canShare({ files:[file] })){
+          await navigator.share({ files:[file], title:`${siteNameFromRemote || 'Safety-Top'} ${currentDate}` });
+          shared = true;
+        }
+      }catch(e){
+        if(e && e.name === 'AbortError'){ statusEl.style.display = 'none'; return; } // 공유 창을 닫은 것
+      }
+      if(!shared){
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url), 10000);
+      }
+      statusEl.style.display = 'none';
+      showToast(t('export_img_done'));
+    }catch(err){
+      console.error('image export failed', err);
+      say(t('export_img_error'), true);
+    }finally{
+      btns.forEach(b=>b.disabled = false);
+    }
+  }
+  $('export-img-all-btn').addEventListener('click', ()=> exportDashboardImage(false));
+  $('export-img-high-btn').addEventListener('click', ()=> exportDashboardImage(true));
+
   // ---------------- bulk complete / bulk delete (admin only) ----------------
   let bulkSelectMode = false;
   let bulkMode = 'complete'; // 'complete' | 'delete'
@@ -5660,7 +6047,11 @@ const db = getFirestore(fbApp);
     document.querySelectorAll('.risk-choice button').forEach(btn=> btn.classList.toggle('on', btn.dataset.risk===selectedRisk));
   }
 
+  let continueAfterSave = false;
+  $('save-continue-btn').addEventListener('click', ()=>{ if($('save-btn').disabled) return; continueAfterSave = true; $('save-btn').click(); });
   $('save-btn').addEventListener('click', async ()=>{
+    const goOn = continueAfterSave && !editingId; // "저장 후 이어서 등록"으로 눌렀는지(수정 중에는 해당 없음)
+    continueAfterSave = false;
     const zoneSel = $('f-zone').value;
     let isManualZone = zoneSel === ZONE_MANUAL;
     let zoneId = isManualZone ? '' : zoneSel;
@@ -5758,21 +6149,34 @@ const db = getFirestore(fbApp);
         // 인터넷이 느릴 때 "저장 실패"를 보고 다시 눌러도 같은 작업이 2개 생기지 않도록,
         // 새 작업의 문서 ID를 미리 정해 두고 그 ID로 저장한다(재시도하면 같은 문서를 덮어씀).
         if(!newWorkDocId) newWorkDocId = doc(collection(db,'works')).id;
-        await withTimeout(setDoc(doc(db,'works',newWorkDocId), {
+        const newWorkData = {
           date: currentDate, zoneId, locationText, workType, people, vulnerable, time, company, supervisor, note, areas, area: null, status, risk: selectedRisk, equipment, createdAt: Date.now()
-        }));
+        };
+        // 연결이 끊기거나 느려서 저장이 안 끝나도 입력 내용이 사라지지 않도록 이 기기에 먼저 보관해 두고,
+        // 서버에 저장이 확인되면(나중에 확인돼도) 보관본을 지운다.
+        const wid = newWorkDocId;
+        addPendingWork(wid, newWorkData);
+        const wp = setDoc(doc(db,'works',wid), newWorkData);
+        wp.then(()=>{ removePendingWork(wid); renderConnBanner(); }).catch(()=>{});
+        await withTimeout(wp);
       }
       pushRecentValue('safetytop_recent_worktypes', workType);
       pushRecentValue('safetytop_recent_companies', company);
       if(mySeq !== workSaveSeq) return; // 그 사이에 다른 폼이 열렸으면 화면은 건드리지 않음
       workFormDirty = false;
-      closeWorkModal();
-      showToast(t('saved_ok'));
+      if(goOn){
+        continueRegistration();
+      } else {
+        closeWorkModal();
+        showToast(t('saved_ok'));
+      }
     }catch(e){
       console.error('work save failed', e);
       if(mySeq !== workSaveSeq) return;
-      errEl.textContent = t(e && e.message === 'TIMEOUT' ? 'save_slow' : 'save_failed');
+      errEl.textContent = t(e && e.message === 'TIMEOUT' ? 'save_slow' : 'save_failed') + (editingId ? '' : '\n' + t('pending_saved_hint'));
+      errEl.style.whiteSpace = 'pre-line';
       errEl.style.display = 'block';
+      renderConnBanner();
       errEl.scrollIntoView({behavior:'smooth', block:'center'});
     }finally{
       if(mySeq === workSaveSeq){
@@ -5969,6 +6373,130 @@ const db = getFirestore(fbApp);
 
   // 휴대폰 "뒤로가기"(버튼/제스처): 앱을 빠져나가지 않고 열린 창 → 열린 화면 순서로 닫는다.
   // 창이나 화면이 열리면 브라우저 기록을 하나 쌓아 두고, 뒤로가기를 누르면 그 기록을 써서 닫는다.
+  // ---------------- 연결 상태 안내 · 전송 못 한 작업 보관 · 연결 진단 ----------------
+  const PENDING_KEY = 'safetytop_pending_works';
+  function withTimeoutMs(pr, ms){ return Promise.race([pr, new Promise((_, rej)=> setTimeout(()=> rej(new Error('TIMEOUT')), ms))]); }
+  function loadPendingWorks(){
+    try{
+      const arr = JSON.parse(localStorage.getItem(PENDING_KEY) || '[]');
+      const limit = Date.now() - 7 * 24 * 3600 * 1000; // 7일 지난 건 자동으로 버린다
+      return Array.isArray(arr) ? arr.filter(x=>x && x.id && x.data && (x.ts || 0) > limit) : [];
+    }catch(e){ return []; }
+  }
+  function savePendingWorks(list){ try{ localStorage.setItem(PENDING_KEY, JSON.stringify(list)); }catch(e){} }
+  function addPendingWork(id, data){
+    const list = loadPendingWorks().filter(x=>x.id !== id);
+    list.push({ id, data, ts: Date.now() });
+    savePendingWorks(list);
+  }
+  function removePendingWork(id){ savePendingWorks(loadPendingWorks().filter(x=>x.id !== id)); }
+
+  const connState = { offline:false, fromCache:false, cacheSince:0, lastServerAt:0, saving:false };
+  function renderConnBanner(){
+    const banner = $('conn-banner');
+    if(!banner) return;
+    const pending = loadPendingWorks().filter(x=> !(inFlightPending.has(x.id)));
+    const parts = [];
+    if(connState.offline) parts.push(t('conn_offline') + ' ' + t('conn_offline_save'));
+    if(pending.length) parts.push(t('conn_pending').replace('{n}', pending.length));
+    banner.style.display = parts.length ? 'flex' : 'none';
+    $('conn-banner-text').textContent = parts.join('  ');
+    $('conn-banner-actions').style.display = (pending.length && !connState.offline) ? 'inline-flex' : 'none';
+  }
+  const inFlightPending = new Set();
+  function evalConn(){
+    const navOff = navigator.onLine === false;
+    const stale = connState.fromCache && connState.cacheSince && (Date.now() - connState.cacheSince > 6000);
+    const off = navOff || !!stale;
+    if(off !== connState.offline){
+      const was = connState.offline;
+      connState.offline = off;
+      if(was && !off) showToast(t('conn_restored'));
+      renderConnBanner();
+    }
+  }
+  window.addEventListener('online', evalConn);
+  window.addEventListener('offline', evalConn);
+  setInterval(evalConn, 2000);
+  // 서버와 실제로 이어져 있는지는 작은 문서(meta/site)의 "캐시에서 온 응답인지" 표시로 알 수 있다
+  onSnapshot(doc(db, 'meta', 'site'), { includeMetadataChanges:true }, (snap)=>{
+    connState.fromCache = !!(snap.metadata && snap.metadata.fromCache);
+    if(connState.fromCache){ if(!connState.cacheSince) connState.cacheSince = Date.now(); }
+    else { connState.cacheSince = 0; connState.lastServerAt = Date.now(); }
+    evalConn();
+  }, (err)=>{ console.error('connection listen error', err); });
+
+  $('conn-resend').addEventListener('click', async ()=>{
+    const list = loadPendingWorks();
+    if(!list.length){ renderConnBanner(); return; } // 다른 탭에서 이미 보낸 경우
+    const btn = $('conn-resend'); btn.disabled = true;
+    let ok = 0, fail = 0;
+    for(const p of list){
+      inFlightPending.add(p.id);
+      try{ await withTimeoutMs(setDoc(doc(db, 'works', p.id), p.data), 15000); removePendingWork(p.id); ok++; }
+      catch(e){ console.error('pending resend failed', e); fail++; }
+      finally{ inFlightPending.delete(p.id); }
+    }
+    btn.disabled = false;
+    if(ok) showToast(t('conn_resend_ok').replace('{n}', ok));
+    if(fail) showToast(t('conn_resend_fail').replace('{n}', fail), true);
+    renderConnBanner();
+  });
+  $('conn-discard').addEventListener('click', ()=>{
+    if(!confirm(t('conn_discard_confirm'))) return;
+    savePendingWorks([]);
+    renderConnBanner();
+    showToast(t('conn_discarded'));
+  });
+  renderConnBanner();
+  window.addEventListener('storage', (e)=>{ if(e.key === PENDING_KEY) renderConnBanner(); }); // 다른 탭에서 바뀌면 이 탭의 안내도 갱신
+
+  // 관리자: 연결 진단 (오류가 났을 때 담당자에게 그대로 복사해서 전달)
+  const diagBackdrop = $('diag-backdrop');
+  async function buildDiagnostics(){
+    const ta = $('diag-text');
+    ta.value = t('diag_checking');
+    const hhmmss = (ms)=>{ if(!ms) return '-'; const d = new Date(ms); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`; };
+    let ping = '';
+    const t0 = Date.now();
+    try{ const q = query(collection(db, 'works'), where('date', '==', todayStr())); const snap = await withTimeoutMs(getDocs(q), 8000); ping = `OK ${Date.now() - t0}ms (오늘 작업 ${snap.size}건)`; }
+    catch(e){ ping = `실패 (${(e && e.message) || e})`; }
+    const pend = loadPendingWorks();
+    const lines = [
+      `[Safety-Top 연결 진단] ${new Date().toLocaleString('ko-KR')}`,
+      `앱 버전: ${APP_VERSION}`,
+      `주소: ${location.href}`,
+      `브라우저 온라인: ${navigator.onLine ? '예' : '아니오'}`,
+      `서버 연결: ${connState.offline ? '끊김/불안정' : (connState.fromCache ? '확인 중' : '정상')}`,
+      `마지막 서버 응답: ${hhmmss(connState.lastServerAt)}`,
+      `서버 응답 시험: ${ping}`,
+      `화면 데이터: 위치 ${zones.length}곳, 현재 날짜(${currentDate}) 작업 ${markers.length}건, 담당자 ${staffList.length}명`,
+      `전송 못 한 작업(이 기기): ${pend.length}건`,
+      `화면 크기: ${innerWidth}x${innerHeight} / 언어: ${LANG} / 관리자 모드: ${isAdmin ? '예' : '아니오'}`,
+      `기기: ${navigator.userAgent}`,
+      `최근 오류 ${recentErrors.length}건:`,
+      ...(recentErrors.length ? recentErrors.map(x=>'  ' + x) : ['  (없음)'])
+    ];
+    ta.value = lines.join('\n');
+  }
+  function openDiag(){ diagBackdrop.classList.add('show'); buildDiagnostics(); }
+  function closeDiag(){ diagBackdrop.classList.remove('show'); setActiveTab('dashboard'); }
+  $('mp-diag').addEventListener('click', ()=>{ managePanelBackdrop.classList.remove('show'); openDiag(); });
+  $('diag-close').addEventListener('click', closeDiag);
+  diagBackdrop.addEventListener('click', (e)=>{ if(e.target === diagBackdrop) closeDiag(); });
+  $('diag-refresh').addEventListener('click', buildDiagnostics);
+  $('diag-copy').addEventListener('click', async ()=>{
+    const ta = $('diag-text');
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){ await navigator.clipboard.writeText(ta.value); }
+      else { ta.focus(); ta.select(); if(!document.execCommand('copy')) throw new Error('copy'); }
+      showToast(t('diag_copied'));
+    }catch(e){
+      ta.focus(); ta.select();
+      showToast(t('diag_copy_fail'), true);
+    }
+  });
+
   // ---------------- 공지사항 ----------------
   // 관리자가 meta/notice 문서에 공지를 쓰면, 앱을 연 모든 사람에게 팝업으로 뜬다.
   // "오늘 하루 보지 않기"는 이 기기에서 오늘만 숨기고, 공지 내용을 새로 게시하면 다시 뜬다.
